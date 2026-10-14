@@ -1,3 +1,6 @@
+> **ZL fork 说明**：本仓库是 [JObersi10/apple-music-tv](https://github.com/JObersi10/apple-music-tv) 的 fork（GPL-3.0 随仓库保持）。
+> 改造目标：保留 Apple Music TV 的完整 UI/交互，把数据层从 Apple Music 官方 API 替换为自定义音源引擎（lx-music userApi 脚本），详见 docs/ZL_ROADMAP.md。
+
 <div align="center">
 
 ![Apple Music TV](images/banner.svg)

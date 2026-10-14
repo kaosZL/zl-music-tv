@@ -15,7 +15,7 @@
     <application
         android:name=".AppleMusicApp"
         android:allowBackup="false"
-        android:label="Apple Music TV"
+        android:label="ZL Music"
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/banner"
         android:theme="@style/Theme.AppleMusicTV"
