@@ -87,7 +87,7 @@ class RadioSource @Inject constructor() {
                 if (stream.isBlank()) continue
                 out.add(RadioStation(
                     id = o.optString("stationuuid", stream),
-                    name = o.optString("name").trim().ifEmpty { "Unknown" },
+                    name = o.optString("name").trim().ifEmpty { "未知电台" },
                     streamUrl = stream,
                     faviconUrl = o.optString("favicon").takeIf { it.isNotBlank() },
                     country = o.optString("countrycode"),

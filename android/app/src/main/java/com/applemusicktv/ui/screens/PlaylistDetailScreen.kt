@@ -130,7 +130,7 @@ fun PlaylistDetailScreen(
             if (state.curatorName.isNotEmpty())
                 Text(state.curatorName, fontSize = 15.sp, color = Color(0xFFFA233B), modifier = Modifier.padding(top = 4.dp))
             if (state.tracks.isNotEmpty())
-                Text("${state.tracks.size} songs", fontSize = 12.sp, color = Color(0xFF555555), modifier = Modifier.padding(top = 4.dp))
+                Text("${state.tracks.size} 首歌曲", fontSize = 12.sp, color = Color(0xFF555555), modifier = Modifier.padding(top = 4.dp))
         }
 
         // Right panel — Play/Shuffle header + track list
@@ -140,7 +140,7 @@ fun PlaylistDetailScreen(
                     CircularProgressIndicator(color = Color(0xFFFA233B))
                 }
                 state.tracks.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text("No tracks", color = Color(0xFF555555), fontSize = 14.sp)
+                    Text("暂无曲目", color = Color(0xFF555555), fontSize = 14.sp)
                 }
                 else -> {
                     LazyColumn(
@@ -156,10 +156,10 @@ fun PlaylistDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            PillButton(Glyph.PLAY, "Play", Color(0xFFFA233B), Color(0xFFFF3B54)) {
+                            PillButton(Glyph.PLAY, "播放", Color(0xFFFA233B), Color(0xFFFF3B54)) {
                                 playerVm.playAlbum(sortedTracks, 0)   // mixed queue; videos route to the video player
                             }
-                            PillButton(Glyph.SHUFFLE, "Shuffle", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) {
+                            PillButton(Glyph.SHUFFLE, "随机播放", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) {
                                 playerVm.playAlbum(sortedTracks.shuffled(), 0, shuffle = true)
                             }
                             Spacer(Modifier.weight(1f))
@@ -206,13 +206,13 @@ fun PlaylistDetailScreen(
                 Text(s.title, fontSize = 13.sp, color = Color(0xFF999999), fontWeight = FontWeight.Medium, maxLines = 1,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
                 HorizontalDivider(color = Color(0xFF2E2E30), thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
-                PlaylistContextItem(Glyph.PLAY_NEXT, "Play Next",    { if (!clickBlocked) { playerVm.playNext(s);    dismissMenu() } }, Modifier.focusRequester(firstFocus))
-                PlaylistContextItem(Glyph.QUEUE_ADD, "Add to Queue", { if (!clickBlocked) { playerVm.addToQueue(s); dismissMenu() } })
-                PlaylistContextItem(Glyph.RADIO, "Create Station", { if (!clickBlocked) { playerVm.createSongStation(s); dismissMenu() } })
-                PlaylistContextItem(Glyph.ADD_TO, "Add to…", { if (!clickBlocked) { addToSong = s; dismissMenu() } })
+                PlaylistContextItem(Glyph.PLAY_NEXT, "下一首播放",    { if (!clickBlocked) { playerVm.playNext(s);    dismissMenu() } }, Modifier.focusRequester(firstFocus))
+                PlaylistContextItem(Glyph.QUEUE_ADD, "加入队列", { if (!clickBlocked) { playerVm.addToQueue(s); dismissMenu() } })
+                PlaylistContextItem(Glyph.RADIO, "创建电台", { if (!clickBlocked) { playerVm.createSongStation(s); dismissMenu() } })
+                PlaylistContextItem(Glyph.ADD_TO, "添加到…", { if (!clickBlocked) { addToSong = s; dismissMenu() } })
                 HorizontalDivider(color = Color(0xFF2E2E30), thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
-                s.artistId?.let { aid -> PlaylistContextItem(Glyph.ARTIST, "Go to Artist", onClick = { if (!clickBlocked) { onArtistClick(aid); dismissMenu() } }) }
-                s.albumId?.let  { alid -> PlaylistContextItem(Glyph.ALBUM, "Go to Album",  onClick = { if (!clickBlocked) { onAlbumClick(alid);  dismissMenu() } }) }
+                s.artistId?.let { aid -> PlaylistContextItem(Glyph.ARTIST, "前往艺人", onClick = { if (!clickBlocked) { onArtistClick(aid); dismissMenu() } }) }
+                s.albumId?.let  { alid -> PlaylistContextItem(Glyph.ALBUM, "前往专辑",  onClick = { if (!clickBlocked) { onAlbumClick(alid);  dismissMenu() } }) }
             }
         }
     }
@@ -225,7 +225,7 @@ fun PlaylistDetailScreen(
 }
 
 private enum class PlaylistSort(val label: String) {
-    DEFAULT("Default"), TITLE("Title"), ARTIST("Artist"), ALBUM("Album")
+    DEFAULT("默认"), TITLE("标题"), ARTIST("艺人"), ALBUM("专辑")
 }
 
 /** Round sort button (right side of the header) — opens the sort popup. */
@@ -263,7 +263,7 @@ private fun PlaylistSortDialog(
             modifier = Modifier.width(340.dp),
         ) {
             Column(Modifier.padding(vertical = 18.dp)) {
-                Text("Sort By", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White,
+                Text("排序方式", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White,
                     modifier = Modifier.padding(start = 22.dp, bottom = 10.dp))
                 PlaylistSort.entries.forEachIndexed { i, opt ->
                     PlaylistSortRow(opt.label, opt == current,
@@ -273,8 +273,8 @@ private fun PlaylistSortDialog(
                 }
                 Box(Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 22.dp)
                     .height(1.dp).background(Color(0xFF3A3A3C)))
-                PlaylistSortRow("Ascending", !descending) { onPick(current, false) }
-                PlaylistSortRow("Descending", descending) { onPick(current, true) }
+                PlaylistSortRow("升序", !descending) { onPick(current, false) }
+                PlaylistSortRow("降序", descending) { onPick(current, true) }
             }
         }
         LaunchedEffect(Unit) { firstFocus.requestFocus() }

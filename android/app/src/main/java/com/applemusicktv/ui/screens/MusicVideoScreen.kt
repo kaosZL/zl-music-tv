@@ -188,7 +188,7 @@ fun MusicVideoScreen(
 
         if (state.error != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Can't play this video", color = Color(0xFFFF453A), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("无法播放此视频", color = Color(0xFFFF453A), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(6.dp))
                 Text(state.error ?: "", color = Color(0xFF888888), fontSize = 12.sp)
             }
@@ -231,7 +231,7 @@ fun MusicVideoScreen(
                             Spacer(Modifier.height(3.dp))
                             Text(state.title, color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.6).sp)
                         }
-                        if (auds.isNotEmpty()) { PillButton("Audio", focus == MvTarget.AUDIO); Spacer(Modifier.width(10.dp)) }
+                        if (auds.isNotEmpty()) { PillButton("音轨", focus == MvTarget.AUDIO); Spacer(Modifier.width(10.dp)) }
                         QualityPill(focused = focus == MvTarget.QUALITY); Spacer(Modifier.width(10.dp))
                         RoundGlyph(GlyphKind.QUEUE, focus == MvTarget.QUEUE, 44.dp)
                     }
@@ -291,7 +291,7 @@ fun MusicVideoScreen(
             Box(Modifier.fillMaxHeight().padding(14.dp).width(360.dp).clip(RoundedCornerShape(22.dp)).background(Color(0xF21C1C1E)).padding(vertical = 22.dp)) {
                 LazyColumn(contentPadding = PaddingValues(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     item {
-                        Text("Up Next", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                        Text("即将播放", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.3).sp, modifier = Modifier.padding(bottom = 14.dp))
                     }
                     itemsIndexed(queue) { i, song ->
@@ -325,7 +325,7 @@ fun MusicVideoScreen(
             exit = scaleOut(targetScale = 0.9f) + fadeOut(),
             modifier = Modifier.align(Alignment.BottomEnd).padding(end = 52.dp, bottom = 190.dp),
         ) {
-            val title = if (picker == MvPicker.AUDIO) "Audio" else "Quality"
+            val title = if (picker == MvPicker.AUDIO) "音轨" else "画质"
             Box(Modifier.width(230.dp).clip(RoundedCornerShape(18.dp)).background(Color(0xF21C1C1E)).padding(vertical = 10.dp)) {
                 Column {
                     Text(title, color = Color(0x99FFFFFF), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,

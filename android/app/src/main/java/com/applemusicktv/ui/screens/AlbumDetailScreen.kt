@@ -107,10 +107,10 @@ fun AlbumDetailScreen(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    PillButton(Glyph.PLAY, "Play", Color(0xFFFA233B), Color(0xFFFF3B54)) {
+                    PillButton(Glyph.PLAY, "播放", Color(0xFFFA233B), Color(0xFFFF3B54)) {
                         playerVm.playAlbum(state.tracks)
                     }
-                    PillButton(Glyph.SHUFFLE, "Shuffle", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) {
+                    PillButton(Glyph.SHUFFLE, "随机播放", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) {
                         playerVm.playAlbum(state.tracks.shuffled(), shuffle = true)
                     }
                 }
@@ -165,15 +165,15 @@ fun AlbumDetailScreen(
                 Text(s.title, fontSize = 13.sp, color = Color(0xFF999999), fontWeight = FontWeight.Medium, maxLines = 1,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
                 HorizontalDivider(color = Color(0xFF2E2E30), thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
-                AlbumContextItem(Glyph.PLAY_NEXT, "Play Next",    { if (!clickBlocked) { playerVm.playNext(s);    dismissMenu() } }, Modifier.focusRequester(firstFocus))
-                AlbumContextItem(Glyph.QUEUE_ADD, "Add to Queue", { if (!clickBlocked) { playerVm.addToQueue(s); dismissMenu() } })
-                AlbumContextItem(Glyph.ADD_TO, "Add to…", { if (!clickBlocked) { addToSong = s; dismissMenu() } })
-                AlbumContextItem(Glyph.RADIO, "Create Station", { if (!clickBlocked) { playerVm.createSongStation(s); dismissMenu() } })
+                AlbumContextItem(Glyph.PLAY_NEXT, "下一首播放",    { if (!clickBlocked) { playerVm.playNext(s);    dismissMenu() } }, Modifier.focusRequester(firstFocus))
+                AlbumContextItem(Glyph.QUEUE_ADD, "加入队列", { if (!clickBlocked) { playerVm.addToQueue(s); dismissMenu() } })
+                AlbumContextItem(Glyph.ADD_TO, "添加到…", { if (!clickBlocked) { addToSong = s; dismissMenu() } })
+                AlbumContextItem(Glyph.RADIO, "创建电台", { if (!clickBlocked) { playerVm.createSongStation(s); dismissMenu() } })
                 val goArtist = s.artistId ?: album.artistId ?: state.tracks.firstOrNull()?.artistId
                 val goAlbum  = s.albumId ?: album.id
                 HorizontalDivider(color = Color(0xFF2E2E30), thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 8.dp))
-                if (goArtist != null) AlbumContextItem(Glyph.ARTIST, "Go to Artist", onClick = { if (!clickBlocked) { onArtistClick(goArtist); dismissMenu() } })
-                if (goAlbum  != null) AlbumContextItem(Glyph.ALBUM, "Go to Album",  onClick = { if (!clickBlocked) { onAlbumClick(goAlbum);   dismissMenu() } })
+                if (goArtist != null) AlbumContextItem(Glyph.ARTIST, "前往艺人", onClick = { if (!clickBlocked) { onArtistClick(goArtist); dismissMenu() } })
+                if (goAlbum  != null) AlbumContextItem(Glyph.ALBUM, "前往专辑",  onClick = { if (!clickBlocked) { onAlbumClick(goAlbum);   dismissMenu() } })
             }
         }
     }

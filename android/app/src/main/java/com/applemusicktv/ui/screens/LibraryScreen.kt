@@ -36,7 +36,7 @@ import com.applemusicktv.ui.viewmodel.PlayerViewModel
 import com.applemusicktv.ui.viewmodel.SortField
 
 private enum class LibrarySection(val label: String) {
-    Playlists("Playlists"), Albums("Albums"), Artists("Artists"), Songs("Songs"),
+    Playlists("播放列表"), Albums("专辑"), Artists("艺人"), Songs("歌曲"),
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -70,7 +70,7 @@ fun LibraryScreen(
                     CircularProgressIndicator(color = Color(0xFFFA233B))
                 }
                 state.error != null -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text("Error: ${state.error}", color = Color(0xFFFF3B30), fontSize = 14.sp)
+                    Text("错误：${state.error}", color = Color(0xFFFF3B30), fontSize = 14.sp)
                 }
                 else -> Column(Modifier.fillMaxSize()) {
                     SortBar(section, state.sort.field, state.sort.dir) { f, d -> vm.setSort(f, d) }
@@ -111,7 +111,7 @@ private fun SectionSidebar(selected: LibrarySection, onSelect: (LibrarySection) 
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            "Library",
+            "资料库",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
@@ -159,12 +159,12 @@ private fun SortBar(
     onSort: (SortField, com.applemusicktv.ui.viewmodel.SortDir) -> Unit,
 ) {
     val fields = when (section) {
-        LibrarySection.Playlists -> listOf(SortField.DEFAULT to "Playlist Order", SortField.NAME to "Name")
-        LibrarySection.Albums    -> listOf(SortField.DEFAULT to "Date Added", SortField.NAME to "Name", SortField.ARTIST to "Artist")
-        LibrarySection.Artists   -> listOf(SortField.DEFAULT to "Date Added", SortField.NAME to "Name")
-        LibrarySection.Songs     -> listOf(SortField.DEFAULT to "Date Added", SortField.NAME to "Title", SortField.ARTIST to "Artist")
+        LibrarySection.Playlists -> listOf(SortField.DEFAULT to "播放列表顺序", SortField.NAME to "名称")
+        LibrarySection.Albums    -> listOf(SortField.DEFAULT to "添加日期", SortField.NAME to "名称", SortField.ARTIST to "艺人")
+        LibrarySection.Artists   -> listOf(SortField.DEFAULT to "添加日期", SortField.NAME to "名称")
+        LibrarySection.Songs     -> listOf(SortField.DEFAULT to "添加日期", SortField.NAME to "标题", SortField.ARTIST to "艺人")
     }
-    val curLabel = fields.firstOrNull { it.first == currentField }?.second ?: "Sort"
+    val curLabel = fields.firstOrNull { it.first == currentField }?.second ?: "排序"
     val dirArrow = if (currentDir == com.applemusicktv.ui.viewmodel.SortDir.ASC) "↑" else "↓"
     var showDialog by remember { mutableStateOf(false) }
 
@@ -220,7 +220,7 @@ private fun SortDialog(
             modifier = Modifier.width(340.dp),
         ) {
             Column(Modifier.padding(vertical = 18.dp)) {
-                Text("Sort By", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White,
+                Text("排序方式", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White,
                     modifier = Modifier.padding(start = 22.dp, bottom = 10.dp))
                 fields.forEachIndexed { i, (field, label) ->
                     SortRow(
@@ -231,8 +231,8 @@ private fun SortDialog(
                 }
                 Box(Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 22.dp)
                     .height(1.dp).background(Color(0xFF3A3A3C)))
-                SortRow("Ascending", currentDir == Asc) { onPick(currentField, Asc) }
-                SortRow("Descending", currentDir == Desc) { onPick(currentField, Desc) }
+                SortRow("升序", currentDir == Asc) { onPick(currentField, Asc) }
+                SortRow("降序", currentDir == Desc) { onPick(currentField, Desc) }
             }
         }
         LaunchedEffect(Unit) { firstFocus.requestFocus() }
@@ -277,7 +277,7 @@ private fun PlaylistGrid(
     onTogglePin: (PlaylistDto) -> Unit,
 ) {
     if (playlists.isEmpty()) {
-        Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No playlists", color = Color(0xFF555555)) }
+        Box(Modifier.fillMaxSize(), Alignment.Center) { Text("暂无播放列表", color = Color(0xFF555555)) }
         return
     }
     LazyVerticalGrid(
@@ -376,7 +376,7 @@ private fun PlaylistCard(
 
 @Composable
 private fun AlbumGrid(albums: List<Album>, onAlbumClick: (String) -> Unit) {
-    if (albums.isEmpty()) { Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No albums", color = Color(0xFF555555)) }; return }
+    if (albums.isEmpty()) { Box(Modifier.fillMaxSize(), Alignment.Center) { Text("暂无专辑", color = Color(0xFF555555)) }; return }
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
         contentPadding = PaddingValues(start = 32.dp, end = 48.dp, top = 20.dp, bottom = 48.dp),
@@ -393,7 +393,7 @@ private fun AlbumGrid(albums: List<Album>, onAlbumClick: (String) -> Unit) {
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun ArtistList(artists: List<Artist>, onArtistClick: (String) -> Unit) {
-    if (artists.isEmpty()) { Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No artists", color = Color(0xFF555555)) }; return }
+    if (artists.isEmpty()) { Box(Modifier.fillMaxSize(), Alignment.Center) { Text("暂无艺人", color = Color(0xFF555555)) }; return }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 32.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         items(artists, key = { it.id }) { artist ->
             Surface(onClick = { onArtistClick(artist.id) }, modifier = Modifier.fillMaxWidth(), shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(8.dp)),
@@ -417,7 +417,7 @@ private fun SongList(
     onArtistClick: (String) -> Unit = {},
     onAlbumClick: (String) -> Unit = {},
 ) {
-    if (songs.isEmpty()) { Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No songs", color = Color(0xFF555555)) }; return }
+    if (songs.isEmpty()) { Box(Modifier.fillMaxSize(), Alignment.Center) { Text("暂无歌曲", color = Color(0xFF555555)) }; return }
     var menuSong by remember { mutableStateOf<Song?>(null) }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 32.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         items(songs.size) { idx ->
@@ -490,12 +490,12 @@ private fun SongContextMenu(
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2A)))
             Spacer(Modifier.height(2.dp))
-            ContextMenuItem("Play Next", onPlayNext, Modifier.focusRequester(firstFocus))
-            ContextMenuItem("Add to Queue", onAddToQueue)
-            if (onAddToLibrary  != null) ContextMenuItem("Add to Library",  onAddToLibrary)
-            if (onAddToPlaylist != null) ContextMenuItem("Add to Playlist", onAddToPlaylist)
-            if (onGoToArtist != null) ContextMenuItem("Go to Artist", onGoToArtist)
-            if (onGoToAlbum  != null) ContextMenuItem("Go to Album",  onGoToAlbum)
+            ContextMenuItem("下一首播放", onPlayNext, Modifier.focusRequester(firstFocus))
+            ContextMenuItem("加入队列", onAddToQueue)
+            if (onAddToLibrary  != null) ContextMenuItem("添加到资料库",  onAddToLibrary)
+            if (onAddToPlaylist != null) ContextMenuItem("添加到播放列表", onAddToPlaylist)
+            if (onGoToArtist != null) ContextMenuItem("前往艺人", onGoToArtist)
+            if (onGoToAlbum  != null) ContextMenuItem("前往专辑",  onGoToAlbum)
         }
     }
 }
@@ -517,8 +517,8 @@ private fun ContextMenuItem(label: String, onClick: () -> Unit, modifier: Modifi
 private fun NoMutPlaceholder() {
     Box(Modifier.fillMaxSize(), Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("No Music User Token", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("Open Dev tab → use web server on phone to add token", color = Color(0xFF666666), fontSize = 13.sp)
+            Text("没有 Music User Token", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("打开 ⚙ 页面 → 用手机网页服务器添加令牌", color = Color(0xFF666666), fontSize = 13.sp)
         }
     }
 }
@@ -556,7 +556,7 @@ private fun PlaylistPickerDialog(
                 .clip(RoundedCornerShape(16.dp)).background(Color(0xFF1C1C1E)).padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text("Add to Playlist", fontSize = 15.sp, color = Color.White, fontWeight = FontWeight.SemiBold,
+            Text("添加到播放列表", fontSize = 15.sp, color = Color.White, fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2A)))
             Spacer(Modifier.height(4.dp))
@@ -565,7 +565,7 @@ private fun PlaylistPickerDialog(
                 pls == null -> Box(Modifier.fillMaxWidth().padding(24.dp), Alignment.Center) {
                     androidx.compose.material3.CircularProgressIndicator(color = Color(0xFFFA233B))
                 }
-                pls.isEmpty() -> Text("No editable playlists", color = Color(0xFF888888), fontSize = 13.sp,
+                pls.isEmpty() -> Text("没有可编辑的播放列表", color = Color(0xFF888888), fontSize = 13.sp,
                     modifier = Modifier.padding(16.dp))
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     items(pls.size) { i ->

@@ -76,7 +76,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
     // Match Listen Now: no boxed-in 48dp margin. Header is inset 48, the content lists
     // carry their own horizontal contentPadding so rows bleed to the screen edge.
     Column(modifier = modifier.fillMaxSize().padding(top = 28.dp)) {
-        Text("Search", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
+        Text("搜索", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
             modifier = Modifier.padding(start = 48.dp))
         Spacer(Modifier.height(10.dp))
 
@@ -107,7 +107,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                             else if (hasFocused && editing) editing = false
                         },
                     decorationBox = { inner ->
-                        if (state.query.isEmpty()) Text("Artists, albums, songs…", color = Color(0xFF555555), fontSize = 15.sp)
+                        if (state.query.isEmpty()) Text("艺人、专辑、歌曲…", color = Color(0xFF555555), fontSize = 15.sp)
                         inner()
                     }
                 )
@@ -140,7 +140,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                 ) {
                     Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
                         Text(
-                            state.query.ifEmpty { "Search — press to type…" },
+                            state.query.ifEmpty { "搜索 — 按确定键输入…" },
                             color = if (state.query.isEmpty()) Color(0xFF777777) else Color.White,
                             fontSize = 15.sp,
                         )
@@ -177,10 +177,10 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                 ) {
                     Text(ms.title, fontSize = 13.sp, color = Color(0xFF999999), fontWeight = FontWeight.Medium,
                         maxLines = 1, modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
-                    SearchContextItem("▶", "Play Next", { if (!clickBlocked) { playerVm.playNext(ms); menuSong = null } }, Modifier.focusRequester(firstFocus))
-                    SearchContextItem("+", "Add to Queue", { if (!clickBlocked) { playerVm.addToQueue(ms); menuSong = null } })
-                    if (ms.artistId != null) SearchContextItem("♪", "Go to Artist", { if (!clickBlocked) { onArtistClick(ms.artistId); menuSong = null } })
-                    if (ms.albumId != null) SearchContextItem("◉", "Go to Album", { if (!clickBlocked) { onAlbumClick(ms.albumId); menuSong = null } })
+                    SearchContextItem("▶", "下一首播放", { if (!clickBlocked) { playerVm.playNext(ms); menuSong = null } }, Modifier.focusRequester(firstFocus))
+                    SearchContextItem("+", "加入队列", { if (!clickBlocked) { playerVm.addToQueue(ms); menuSong = null } })
+                    if (ms.artistId != null) SearchContextItem("♪", "前往艺人", { if (!clickBlocked) { onArtistClick(ms.artistId); menuSong = null } })
+                    if (ms.albumId != null) SearchContextItem("◉", "前往专辑", { if (!clickBlocked) { onAlbumClick(ms.albumId); menuSong = null } })
                 }
             }
         }
@@ -198,7 +198,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                     // its search page. Editorial playlists first (what the user missed), then artist,
                     // album and the #1 song, so the best match is one focus move away.
                     item {
-                        Text("Top Results", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
+                        Text("最佳结果", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
                         // contentPadding (not Modifier.padding) so a focused, scaled card can scroll
                         // fully into view and its halo isn't sliced at the row edges.
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(horizontal = 6.dp, vertical = 12.dp)) {
@@ -229,7 +229,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                                         }
                                         Spacer(Modifier.height(6.dp))
                                         Text(artist.name, fontSize = 12.sp, color = Color.White, maxLines = 1)
-                                        Text("Artist", fontSize = 10.sp, color = Color(0xFF999999))
+                                        Text("艺人", fontSize = 10.sp, color = Color(0xFF999999))
                                     }
                                 }
                             }
@@ -243,7 +243,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                     }
                     if (results.curators.isNotEmpty()) {
                         item {
-                            Text("Categories", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
+                            Text("分类", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)) {
                                 items(results.curators, key = { it.id }) { cur ->
                                     CuratorCard(cur, onClick = { onCuratorClick(cur.id, cur.kind) })
@@ -253,7 +253,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                     }
                     if (results.playlists.isNotEmpty()) {
                         item {
-                            Text("Playlists", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
+                            Text("播放列表", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)) {
                                 items(results.playlists, key = { it.id }) { pl ->
                                     AlbumCard(album = pl, size = 130, onClick = { onPlaylistClick(pl.id, pl.title, pl.artworkUrl(500) ?: "") })
@@ -263,7 +263,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                     }
                     if (results.artists.isNotEmpty()) {
                         item {
-                            Text("Artists", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
+                            Text("艺人", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)) {
                                 items(results.artists, key = { it.id }) { artist ->
                                     Column(
@@ -298,7 +298,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                     // Two columns of compact rows — a TV is wide, one column wasted it.
                     if (results.songs.isNotEmpty()) {
                         item {
-                            Text("Songs", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 8.dp))
+                            Text("歌曲", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 8.dp))
                         }
                         val rows = results.songs.chunked(2)
                         itemsIndexed(rows, key = { _, r -> r.first().id }) { rowIdx, row ->
@@ -349,7 +349,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                     }
                     if (results.albums.isNotEmpty()) {
                         item {
-                            Text("Albums", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
+                            Text("专辑", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier = Modifier.padding(bottom = 10.dp))
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(7),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -377,7 +377,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                         if (recents.isNotEmpty()) {
                             item {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Recent", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                                    Text("最近搜索", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
                                     Spacer(Modifier.width(12.dp))
                                     Surface(
                                         onClick = { vm.clearRecents() },
@@ -388,7 +388,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                                         ),
                                         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
                                     ) {
-                                        Text("Clear", fontSize = 12.sp, color = Color(0xFFBBBBBB),
+                                        Text("清除", fontSize = 12.sp, color = Color(0xFFBBBBBB),
                                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp))
                                     }
                                 }
@@ -428,17 +428,17 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                         // "More to Explore" — the editorial link list from apple.com's Browse footer.
                         // Each opens an editorial room via the "room" curator kind.
                         item {
-                            Text("More to Explore", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
+                            Text("更多探索", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                                 color = Color.White, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
                             // Triple(label, id, kind): rooms open editorial rooms, grouping opens a
                             // catalog grouping (Music Videos), apple-curator opens a curator page.
                             val links = listOf(
-                                Triple("Music Videos", "34", "grouping"),
-                                Triple("Behind the Songs", "1554941247", "apple-curator"),
-                                Triple("Charts", "6503108310", "room"),
-                                Triple("Browse by Genre", "6456176470", "room"),
-                                Triple("Moods & Activities", "6456176472", "room"),
-                                Triple("Decades", "6456176471", "room"),
+                                Triple("音乐视频", "34", "grouping"),
+                                Triple("歌曲背后", "1554941247", "apple-curator"),
+                                Triple("排行榜", "6503108310", "room"),
+                                Triple("按流派浏览", "6456176470", "room"),
+                                Triple("心情与活动", "6456176472", "room"),
+                                Triple("年代", "6456176471", "room"),
                             )
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 links.forEach { (label, id, kind) ->
@@ -449,7 +449,7 @@ fun SearchScreen(playerVm: PlayerViewModel, onAlbumClick: (String) -> Unit = {},
                     }
                 } else {
                     Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text("Start typing to search Apple Music", color = Color(0xFF555555), fontSize = 16.sp)
+                        Text("输入以搜索 Apple Music", color = Color(0xFF555555), fontSize = 16.sp)
                     }
                 }
             }
@@ -521,7 +521,7 @@ private fun CuratorCard(cur: Curator, size: Int = 130, onClick: () -> Unit) {
         }
         Spacer(Modifier.height(6.dp))
         Text(cur.name, fontSize = 12.sp, color = Color.White, maxLines = 2)
-        Text("Category", fontSize = 10.sp, color = Color(0xFF999999))
+        Text("分类", fontSize = 10.sp, color = Color(0xFF999999))
     }
 }
 

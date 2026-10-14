@@ -47,7 +47,7 @@ fun ArtistDetailScreen(
     }
     if (state.error != null) {
         Box(modifier.fillMaxSize().background(Color(0xFF080808)), Alignment.Center) {
-            Text("Error: ${state.error}", color = Color(0xFFFF3B30), fontSize = 14.sp)
+            Text("错误：${state.error}", color = Color(0xFFFF3B30), fontSize = 14.sp)
         }
         return
     }
@@ -92,12 +92,12 @@ fun ArtistDetailScreen(
 
         // Top songs
         if (state.topSongs.isNotEmpty()) {
-            item { SectionTitle("Top Songs") }
+            item { SectionTitle("热门歌曲") }
             item {
                 Row(Modifier.padding(start = 48.dp, end = 48.dp, bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    PillButton(com.applemusicktv.ui.components.Glyph.PLAY, "Play", Color(0xFFFA233B), Color(0xFFFF3B54)) { playerVm.playAlbum(state.topSongs, 0) }
-                    PillButton(com.applemusicktv.ui.components.Glyph.SHUFFLE, "Shuffle", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) { playerVm.playAlbum(state.topSongs.shuffled(), 0) }
-                    PillButton(com.applemusicktv.ui.components.Glyph.RADIO, "Station", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) { vm.playStation { songs -> playerVm.playAlbum(songs, 0) } }
+                    PillButton(com.applemusicktv.ui.components.Glyph.PLAY, "播放", Color(0xFFFA233B), Color(0xFFFF3B54)) { playerVm.playAlbum(state.topSongs, 0) }
+                    PillButton(com.applemusicktv.ui.components.Glyph.SHUFFLE, "随机播放", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) { playerVm.playAlbum(state.topSongs.shuffled(), 0) }
+                    PillButton(com.applemusicktv.ui.components.Glyph.RADIO, "电台", Color(0xFF2A2A2C), Color(0xFF3A3A3C)) { vm.playStation { songs -> playerVm.playAlbum(songs, 0) } }
                 }
             }
             itemsIndexedTopSongs(state.topSongs, playerVm)
@@ -105,7 +105,7 @@ fun ArtistDetailScreen(
 
         // Music Videos (Essentials) — 16:9 thumbnails, play via the MV path.
         if (state.musicVideos.isNotEmpty()) {
-            item { SectionTitle("Music Videos") }
+            item { SectionTitle("音乐视频") }
             item {
                 LazyRow(contentPadding = PaddingValues(horizontal = 48.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     itemsIndexed(state.musicVideos, key = { _, v -> v.id }) { i, v ->
@@ -116,7 +116,7 @@ fun ArtistDetailScreen(
         }
 
         state.latestRelease?.let { latest ->
-            item { SectionTitle("Latest Release") }
+            item { SectionTitle("最新发行") }
             item {
                 Box(Modifier.padding(horizontal = 48.dp, vertical = 8.dp)) {
                     AlbumCard(album = latest, size = 180, onClick = { onAlbumClick(latest.id) })
@@ -125,16 +125,16 @@ fun ArtistDetailScreen(
         }
 
         if (state.albums.isNotEmpty()) {
-            item { SectionTitle("Albums") }
+            item { SectionTitle("专辑") }
             item { AlbumRow(state.albums, onAlbumClick) }
         }
         if (state.featuredAlbums.isNotEmpty()) {
-            item { SectionTitle("Featured") }
+            item { SectionTitle("精选") }
             item { AlbumRow(state.featuredAlbums, onAlbumClick) }
         }
 
         if (state.similarArtists.isNotEmpty()) {
-            item { SectionTitle("Similar Artists") }
+            item { SectionTitle("相似艺人") }
             item {
                 LazyRow(contentPadding = PaddingValues(horizontal = 48.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(state.similarArtists, key = { it.id }) { a ->

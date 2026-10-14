@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
             this,
             if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
         )
-        val label = if (playing) "Pause" else "Play"
+        val label = if (playing) "暂停" else "播放"
         val pi = PendingIntent.getBroadcast(
             this, 0,
             Intent(pipActionName).setPackage(packageName),

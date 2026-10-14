@@ -38,12 +38,12 @@ fun AddToDialog(playerVm: PlayerViewModel, song: Song, onDismiss: () -> Unit) {
                 .clip(RoundedCornerShape(16.dp)).background(Color(0xFF1C1C1E)).padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text("Add to…", fontSize = 15.sp, color = Color.White, fontWeight = FontWeight.SemiBold,
+            Text("添加到…", fontSize = 15.sp, color = Color.White, fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2A)))
             Spacer(Modifier.height(4.dp))
             // Library always first.
-            AddRow(Glyph.PLUS, "Library", { playerVm.addToLibrary(song); onDismiss() },
+            AddRow(Glyph.PLUS, "资料库", { playerVm.addToLibrary(song); onDismiss() },
                 Modifier.focusRequester(firstFocus))
             Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2A)).padding(vertical = 2.dp))
             val pls = playlists
@@ -51,7 +51,7 @@ fun AddToDialog(playerVm: PlayerViewModel, song: Song, onDismiss: () -> Unit) {
                 pls == null -> Box(Modifier.fillMaxWidth().padding(20.dp), Alignment.Center) {
                     androidx.compose.material3.CircularProgressIndicator(color = Color(0xFFFA233B))
                 }
-                pls.isEmpty() -> Text("No editable playlists", color = Color(0xFF888888), fontSize = 13.sp,
+                pls.isEmpty() -> Text("没有可编辑的播放列表", color = Color(0xFF888888), fontSize = 13.sp,
                     modifier = Modifier.padding(16.dp))
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     items(pls) { pl ->

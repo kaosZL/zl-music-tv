@@ -91,10 +91,10 @@ fun GenreScreen(
         when {
             state.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = Color(0xFFFA233B)) }
             state.error != null -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text("Could not load genre", color = Color(0xFFFF453A), fontSize = 14.sp)
+                Text("无法加载流派内容", color = Color(0xFFFF453A), fontSize = 14.sp)
             }
             state.sections.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text("No content available", color = Color(0xFF555555), fontSize = 14.sp)
+                Text("暂无内容", color = Color(0xFF555555), fontSize = 14.sp)
             }
             else -> LazyColumn(
                 contentPadding = PaddingValues(top = 8.dp, bottom = 102.dp),

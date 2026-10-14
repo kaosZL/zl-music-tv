@@ -246,7 +246,7 @@ class MusicVideoViewModel @Inject constructor(
                 val bearer = appleClient.getBearer()
                 val mut = mutPrefs.getMUT()
                 if (bearer.isEmpty() || mut.isEmpty()) {
-                    _state.value = _state.value.copy(loading = false, error = "Sign-in required")
+                    _state.value = _state.value.copy(loading = false, error = "需要登录")
                     return@launch
                 }
                 // Use the prefetched result if the queue warmed this id ahead of time.
@@ -274,7 +274,7 @@ class MusicVideoViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("AMMV", "MV load failed: ${e.message}", e)
-                _state.value = _state.value.copy(loading = false, error = e.message ?: "Failed to load video")
+                _state.value = _state.value.copy(loading = false, error = e.message ?: "视频加载失败")
             }
         }
     }
@@ -397,7 +397,7 @@ class MusicVideoViewModel @Inject constructor(
                                 // authenticating HDCP, so Apple blocks protected HD (not app-fixable).
                                 android.widget.Toast.makeText(
                                     context,
-                                    "HDCP Error — display link isn't protected, so HD is blocked. Playing ${lower}p.",
+                                    "HDCP 错误 — 显示链路未受保护，无法播放高清。正在播放 ${lower}p。",
                                     android.widget.Toast.LENGTH_LONG,
                                 ).show()
                             } else {
@@ -407,14 +407,14 @@ class MusicVideoViewModel @Inject constructor(
                             playItem(curMvId!!, curTitle, curArtist)   // reload clamped to effHeight()
                             return
                         }
-                        _state.value = _state.value.copy(loading = false, error = error.message ?: "Playback failed")
+                        _state.value = _state.value.copy(loading = false, error = error.message ?: "播放失败")
                     }
                     override fun onCues(cueGroup: androidx.media3.common.text.CueGroup) {
                         _cues.value = cueGroup.cues
                         Log.i("AMMVsub", "cues=${cueGroup.cues.size} text=${cueGroup.cues.firstOrNull()?.text}")
                     }
                     override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
-                        val subs = mutableListOf(SubtitleOption("Off", -1))
+                        val subs = mutableListOf(SubtitleOption("关闭", -1))
                         var subSel = -1; var si = 0
                         val auds = mutableListOf<SubtitleOption>()
                         var audSel = 0; var ai = 0
@@ -422,13 +422,13 @@ class MusicVideoViewModel @Inject constructor(
                             when (group.type) {
                                 C.TRACK_TYPE_TEXT -> for (t in 0 until group.length) {
                                     val fmt = group.getTrackFormat(t)
-                                    subs.add(SubtitleOption(fmt.label ?: fmt.language?.uppercase() ?: "Subtitles", si))
+                                    subs.add(SubtitleOption(fmt.label ?: fmt.language?.uppercase() ?: "字幕", si))
                                     if (group.isTrackSelected(t)) subSel = si
                                     si++
                                 }
                                 C.TRACK_TYPE_AUDIO -> for (t in 0 until group.length) {
                                     val fmt = group.getTrackFormat(t)
-                                    auds.add(SubtitleOption(langName(fmt.language) ?: fmt.label ?: "Audio ${ai + 1}", ai))
+                                    auds.add(SubtitleOption(langName(fmt.language) ?: fmt.label ?: "音轨 ${ai + 1}", ai))
                                     if (group.isTrackSelected(t)) audSel = ai
                                     ai++
                                 }

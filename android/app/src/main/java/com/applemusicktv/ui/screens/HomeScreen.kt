@@ -42,11 +42,11 @@ fun HomeScreen(
     if (state.error != null) {
         Box(modifier.fillMaxSize(), Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Could not connect to server", color = Color(0xFFFF453A), fontSize = 16.sp)
+                Text("无法连接服务器", color = Color(0xFFFF453A), fontSize = 16.sp)
                 Text(state.error ?: "", color = Color(0xFF555555), fontSize = 12.sp)
                 Spacer(Modifier.height(16.dp))
                 Surface(onClick = vm::load, colors = ClickableSurfaceDefaults.colors(containerColor = Color(0xFFFA233B))) {
-                    Text("Retry", color = Color.White, modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp))
+                    Text("重试", color = Color.White, modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp))
                 }
             }
         }
@@ -55,7 +55,7 @@ fun HomeScreen(
 
     if (state.sections.isEmpty()) {
         Box(modifier.fillMaxSize(), Alignment.Center) {
-            Text("No content — set your Music User Token", color = Color(0xFF555555), fontSize = 14.sp)
+            Text("暂无内容 — 请设置你的 Music User Token", color = Color(0xFF555555), fontSize = 14.sp)
         }
         return
     }

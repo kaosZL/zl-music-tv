@@ -82,9 +82,9 @@ private const val CAPTURE_PCM = false
  * - [BLACK]: plain black, no blobs, no beat.
  */
 enum class NowPlayingBackground(val label: String) {
-    DYNAMIC("Dynamic"),
-    PROJECTOR("Projector"),
-    BLACK("Black"),
+    DYNAMIC("动态"),
+    PROJECTOR("投影"),
+    BLACK("纯黑"),
     ;
 
     companion object {
@@ -124,7 +124,7 @@ data class PlayerState(
     /** Total delay applied to the LYRIC clock: hidden 200 ms baseline (+ BT delta) + extra. */
     val avLyricsMs:       Long            = LYRICS_BASELINE_MS,
     /** Human label for the current audio output. */
-    val avOutputLabel:    String          = "HDMI / TV",
+    val avOutputLabel:    String          = "HDMI / 电视",
     val isShuffled:       Boolean         = false,
     val originalQueue:    List<Song>      = emptyList(),
     val repeatMode:       RepeatMode      = RepeatMode.Off,
@@ -441,7 +441,7 @@ class PlayerViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         if ((mi.lowMemory || mi.availMem < mi.threshold * 2) && now - lastMemWarn > 60_000L) {
             lastMemWarn = now
-            toast("High memory usage on this device — playback may stutter")
+            toast("设备内存占用过高 — 播放可能卡顿")
         }
     }
 
@@ -521,8 +521,8 @@ class PlayerViewModel @Inject constructor(
         // Lyrics carry the hidden 200 ms display baseline on every output, plus the same BT delta.
         val lyricsMs = LYRICS_BASELINE_MS + btDelta + extra
         beatAnalyzer.latencyMs = beatMs
-        val label = if (onBt) "Bluetooth" + (btDev?.productName?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
-                    else "HDMI / TV"
+        val label = if (onBt) "蓝牙" + (btDev?.productName?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")
+                    else "HDMI / 电视"
         _state.update { it.copy(avOnBluetooth = onBt, avLyricsMs = lyricsMs, avOutputLabel = label) }
     }
 
@@ -649,7 +649,7 @@ class PlayerViewModel @Inject constructor(
                     radioActive = false   // force a fresh MediaCodec player in playLiveStation
                     viewModelScope.launch { kotlinx.coroutines.delay(800L * radioRecoveries); playLiveStation(sid) }
                 } else {
-                    toast("Live radio stopped — reopen the station to restart")
+                    toast("直播电台已停止 — 重新打开电台即可继续收听")
                     _state.update { it.copy(isPlaying = false) }
                 }
                 return
@@ -668,7 +668,7 @@ class PlayerViewModel @Inject constructor(
                 val cur = _state.value.queue.getOrNull(_state.value.queueIndex)
                 if (cur != null) unavailableSongIds.add(cur.id)
                 webServer.addLog("ERR", "unavailable (404) song=$song — skipping, won't retry")
-                toast("\"$song\" isn't available any more")
+                toast("《$song》已不可用")
                 advanceQueue()
                 return
             }
@@ -725,9 +725,9 @@ class PlayerViewModel @Inject constructor(
                 if (standaloneFailures >= 3 && standalonePrefs.isEnabled()) {
                     standalonePrefs.setEnabled(false)
                     webServer.addLog("PLR", "standalone disabled after $standaloneFailures failures")
-                    toast("On-device playback isn't working here — switched back to the server")
+                    toast("本机播放在此设备不可用 — 已切回服务器")
                 } else {
-                    toast("On-device playback failed — using the server")
+                    toast("本机播放失败 — 改用服务器")
                 }
                 val s = _state.value
                 val cur = s.queue.getOrNull(s.queueIndex)
@@ -744,8 +744,8 @@ class PlayerViewModel @Inject constructor(
                 _state.update { it.copy(isPlaying = true) }
             } else {
                 // Final give-up: neither standalone retry nor a 404 owned this — say why we skipped.
-                toast(if (serverPrefs.serverReachable) "Couldn't play \"$song\" — skipping"
-                      else "Can't reach the server")
+                toast(if (serverPrefs.serverReachable) "无法播放《$song》— 跳过"
+                      else "无法连接服务器")
                 advanceQueue()
             }
         }
@@ -761,7 +761,7 @@ class PlayerViewModel @Inject constructor(
         _state.update { it.copy(standaloneActive = false) }
         if (!serverPrefs.serverReachable) {
             webServer.addLog("PLR", "on-device failed for $songTitle and no server — skipping")
-            toast("Can't play \"$songTitle\" on-device, and no server to fall back to")
+            toast("《$songTitle》无法在本机播放，也没有服务器可用")
             advanceQueue()
             return
         }
@@ -769,9 +769,9 @@ class PlayerViewModel @Inject constructor(
         if (standaloneFailures >= 3 && standalonePrefs.isEnabled()) {
             standalonePrefs.setEnabled(false)
             webServer.addLog("PLR", "standalone disabled after $standaloneFailures failures")
-            toast("On-device playback isn't working here — switched back to the server")
+            toast("本机播放在此设备不可用 — 已切回服务器")
         } else {
-            toast("On-device playback failed — using the server")
+            toast("本机播放失败 — 改用服务器")
         }
         player.setMediaItem(buildMediaItem(cur, repo.streamUrl(cur.id)))
         player.prepare()
@@ -917,12 +917,12 @@ class PlayerViewModel @Inject constructor(
         // about losing/finding a connection we aren't using.
         val announce = !standalonePrefs.isEnabled()
         if (!up) {
-            if (!wasDown && announce) toast("Lost connection to the server")
+            if (!wasDown && announce) toast("与服务器的连接已断开")
             repo.prepareStandalone()
         } else if (wasDown) {
             // Recovered — reset standalone flag so next play uses proxy.
             usingStandalone = false
-            if (announce) toast("Server back online")
+            if (announce) toast("服务器已恢复")
             Log.i("PlayerVM", "Server recovered — returning to proxy mode")
         }
     }
@@ -1422,8 +1422,8 @@ class PlayerViewModel @Inject constructor(
     // ── Library writes ──────────────────────────────────────────────────
     fun addToLibrary(song: com.applemusicktv.data.model.Song) = viewModelScope.launch {
         repo.addToLibrary(song)
-            .onSuccess { toast("Added \"${song.title}\" to Library") }
-            .onFailure { toast("Couldn't add to Library") }
+            .onSuccess { toast("已将《${song.title}》添加到资料库") }
+            .onFailure { toast("无法添加到资料库") }
     }
 
     /** Editable library playlists for the "Add to Playlist" picker. */
@@ -1431,8 +1431,8 @@ class PlayerViewModel @Inject constructor(
 
     fun addToPlaylist(playlistId: String, playlistName: String, song: com.applemusicktv.data.model.Song) = viewModelScope.launch {
         repo.addToPlaylist(playlistId, song)
-            .onSuccess { toast("Added to \"$playlistName\"") }
-            .onFailure { toast("Couldn't add to playlist") }
+            .onSuccess { toast("已添加到《$playlistName》") }
+            .onFailure { toast("无法添加到播放列表") }
     }
 
     fun playStation(stationId: String, stationArt: String? = null) {
@@ -1454,8 +1454,8 @@ class PlayerViewModel @Inject constructor(
         val catId = if (song.id.startsWith("i."))
             appleClient.resolveCatalogFor(song.id, mutPrefs.getMUT())
         else song.id.filter { it.isDigit() }.ifEmpty { song.id }
-        if (catId.isNullOrEmpty()) { toast("Can't start a station for \"${song.title}\""); return@launch }
-        toast("Starting \"${song.title}\" station")
+        if (catId.isNullOrEmpty()) { toast("无法为《${song.title}》创建电台"); return@launch }
+        toast("正在开启《${song.title}》电台")
         playStation("ra.$catId")
     }
 
@@ -1468,7 +1468,7 @@ class PlayerViewModel @Inject constructor(
     /** Plain internet-radio stream player. Radio UI is currently hidden — kept only so
      *  RadioScreen still compiles. No ICY song-identification. */
     @OptIn(UnstableApi::class)
-    fun playInternetRadio(name: String, streamUrl: String, subtitle: String = "Internet Radio") {
+    fun playInternetRadio(name: String, streamUrl: String, subtitle: String = "网络电台") {
         usingStandalone = false
         lastErrorKey = null
         prefetchJob?.cancel()
@@ -1537,7 +1537,7 @@ class PlayerViewModel @Inject constructor(
         val art = stationArt ?: radioStationArt
         radioStationArt = art
         val fakeSong = com.applemusicktv.data.model.Song(
-            id = stationId, title = "Apple Music Radio", artistName = "Apple Music",
+            id = stationId, title = "Apple Music 电台", artistName = "Apple Music",
             albumName = "", durationMs = 0L, artworkUrl = art, artworkBgColor = null,
             previewUrl = null, hasLyrics = false,
         )
@@ -2229,8 +2229,8 @@ class PlayerViewModel @Inject constructor(
         val channelId = "am_alerts"
         if (nm.getNotificationChannel(channelId) == null) {
             nm.createNotificationChannel(
-                NotificationChannel(channelId, "Apple Music Alerts", NotificationManager.IMPORTANCE_HIGH)
-                    .also { it.description = "Auth and service alerts" }
+                NotificationChannel(channelId, "Apple Music 提醒", NotificationManager.IMPORTANCE_HIGH)
+                    .also { it.description = "登录和服务提醒" }
             )
         }
         val notif = NotificationCompat.Builder(context, channelId)
@@ -2252,8 +2252,8 @@ class PlayerViewModel @Inject constructor(
                 .ifEmpty { "Apple Music" }
             webServer.addLog("SVCMON", "Apple service issue detected — $affected")
             showNotification(
-                title = "Apple Music — Service Disruption",
-                body  = "Upstream issue detected ($affected). Expect degraded performance.",
+                title = "Apple Music — 服务中断",
+                body  = "检测到上游服务异常（$affected）。体验可能下降。",
                 id    = 43,
             )
         }
@@ -2262,8 +2262,8 @@ class PlayerViewModel @Inject constructor(
     private fun showAuthNotification() {
         val url = webServer.serverUrl().replace(":8080", "").let { "$it:8080" }
         showNotification(
-            title = "Action Required — Token Expired",
-            body  = "Your Apple Music session has ended. Visit $url to re-authenticate.",
+            title = "需要操作 — 令牌已过期",
+            body  = "你的 Apple Music 会话已结束。请访问 $url 重新登录。",
             id    = 42,
         )
     }

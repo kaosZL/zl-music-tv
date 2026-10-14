@@ -49,7 +49,7 @@ fun CategoryScreen(
                 CircularProgressIndicator(color = Color(0xFFFA233B))
             }
             state.error != null -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text("Couldn't load this category.", color = Color(0xFF888888), fontSize = 15.sp)
+                Text("无法加载此分类。", color = Color(0xFF888888), fontSize = 15.sp)
             }
             // contentPadding (not Modifier.padding) so a focused card's scaled border and
             // glow can bleed into the margin instead of being clipped at the edges.

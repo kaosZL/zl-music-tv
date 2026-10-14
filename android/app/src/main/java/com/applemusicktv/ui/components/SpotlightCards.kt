@@ -34,11 +34,11 @@ private fun bgColor(hex: String?, fallback: Long = 0xFF1A1A1E): Color {
 /** The small uppercase label above a spotlight card, derived from the item type (Apple's own). */
 private fun spotlightLabel(album: Album): String = when {
     album.tagline?.isNotBlank() == true -> album.tagline!!.uppercase()
-    album.type == "playlists" -> "UPDATED PLAYLIST"
-    album.type == "stations" || album.id.startsWith("ra.") -> "NEW RADIO SHOW"
-    album.type == "songs" -> "NEW SONG"
-    album.type == "music-videos" -> "NEW VIDEO"
-    else -> "NEW ALBUM"
+    album.type == "playlists" -> "更新播放列表"
+    album.type == "stations" || album.id.startsWith("ra.") -> "新电台节目"
+    album.type == "songs" -> "新歌"
+    album.type == "music-videos" -> "新MV"
+    else -> "新专辑"
 }
 
 /**

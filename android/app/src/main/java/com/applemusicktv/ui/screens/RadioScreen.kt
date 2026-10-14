@@ -42,7 +42,7 @@ fun RadioScreen(playerVm: PlayerViewModel, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize().background(Color(0xFF0A0A0A)).padding(horizontal = 48.dp, vertical = 28.dp)) {
         // Title + search on one line
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Radio", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            Text("电台", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             Spacer(Modifier.width(24.dp))
             Row(
                 Modifier.width(360.dp).height(38.dp).background(Color(0xFF1C1C1E), RoundedCornerShape(10.dp)).padding(horizontal = 14.dp),
@@ -56,11 +56,11 @@ fun RadioScreen(playerVm: PlayerViewModel, modifier: Modifier = Modifier) {
                     keyboardActions = KeyboardActions(onSearch = { vm.search() }),
                     modifier = Modifier.weight(1f),
                     decorationBox = { inner ->
-                        if (state.query.isEmpty()) Text("Search stations…", color = Color(0xFF555555), fontSize = 14.sp)
+                        if (state.query.isEmpty()) Text("搜索电台…", color = Color(0xFF555555), fontSize = 14.sp)
                         inner()
                     },
                 )
-                Chip("Go") { vm.search() }
+                Chip("搜索") { vm.search() }
             }
         }
 
@@ -68,7 +68,7 @@ fun RadioScreen(playerVm: PlayerViewModel, modifier: Modifier = Modifier) {
 
         // Country chips: Popular + detected/added + "+"
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            SelChip("Popular", state.activeCountry == "") { vm.selectPopular() }
+            SelChip("热门", state.activeCountry == "") { vm.selectPopular() }
             state.countries.forEach { c ->
                 SelChip(c, state.activeCountry == c) { vm.selectCountry(c) }
             }
@@ -87,7 +87,7 @@ fun RadioScreen(playerVm: PlayerViewModel, modifier: Modifier = Modifier) {
                         }),
                         modifier = Modifier.width(120.dp).focusRequester(addFocus),
                         decorationBox = { inner ->
-                            if (addDraft.isEmpty()) Text("Country name…", color = Color(0xFF555555), fontSize = 13.sp)
+                            if (addDraft.isEmpty()) Text("国家名…", color = Color(0xFF555555), fontSize = 13.sp)
                             inner()
                         },
                     )
@@ -99,7 +99,7 @@ fun RadioScreen(playerVm: PlayerViewModel, modifier: Modifier = Modifier) {
 
         state.correctionNote?.let {
             Spacer(Modifier.height(6.dp))
-            Text("Showing $it", fontSize = 11.sp, color = Color(0xFFFA233B))
+            Text("正在显示 $it", fontSize = 11.sp, color = Color(0xFFFA233B))
         }
 
         Spacer(Modifier.height(12.dp))
@@ -107,7 +107,7 @@ fun RadioScreen(playerVm: PlayerViewModel, modifier: Modifier = Modifier) {
         if (state.loading && state.stations.isEmpty()) {
             Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = Color(0xFFFA233B)) }
         } else if (state.stations.isEmpty()) {
-            Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No stations found", color = Color(0xFF666666), fontSize = 14.sp) }
+            Box(Modifier.fillMaxSize(), Alignment.Center) { Text("未找到电台", color = Color(0xFF666666), fontSize = 14.sp) }
         } else {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(state.stations, key = { it.id }) { st ->

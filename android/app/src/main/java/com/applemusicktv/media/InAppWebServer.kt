@@ -341,11 +341,11 @@ class InAppWebServer @Inject constructor(
         val logRows = getLogs().reversed().take(80).joinToString("") { log ->
             val cls = when { log.contains("[OK]") -> "g"; log.contains("[ERROR]") -> "r"; log.contains("[WARN]") -> "y"; else -> "d" }
             "<div class=$cls>${log.replace("<","&lt;")}</div>"
-        }.ifEmpty { "<div class=d>No logs yet.</div>" }
+        }.ifEmpty { "<div class=d>暂无日志。</div>" }
         val netRows = NetworkLog.getAll().reversed().take(100).joinToString("") { log ->
             val cls = when { log.contains("✓") -> "g"; log.contains("✗") -> "r"; else -> "d" }
             "<div class=$cls>${log.replace("<","&lt;")}</div>"
-        }.ifEmpty { "<div class=d>No requests yet.</div>" }
+        }.ifEmpty { "<div class=d>暂无请求。</div>" }
         return """<!DOCTYPE html><html lang=en><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Apple Music TV</title><style>
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,sans-serif;background:#0a0a0a;color:#e5e5e7;padding:20px;max-width:620px;margin:auto}
@@ -374,15 +374,15 @@ ol{font-size:12px;color:#666;line-height:2.4;padding-left:18px}code{color:#fa233
 function refresh(){
   fetch('/status').then(r=>r.json()).then(s=>{
     const el=document.getElementById('status');
-    if(el)el.innerHTML=s.hasMUT?'<div class="row"><div class="dot dot-g"></div><div><div class=label>Music-User-Token active</div></div></div>':'<div class="row"><div class="dot dot-r"></div><div><div class=label>No token</div></div></div>';
+    if(el)el.innerHTML=s.hasMUT?'<div class="row"><div class="dot dot-g"></div><div><div class=label>Music-User-Token 已生效</div></div></div>':'<div class="row"><div class="dot dot-r"></div><div><div class=label>未设置令牌</div></div></div>';
   });
   fetch('/logs').then(r=>r.json()).then(logs=>{
     const el=document.getElementById('applogs');
-    if(el)el.innerHTML=logs.reverse().slice(0,80).map(l=>{const c=l.includes('[OK]')?'g':l.includes('[ERROR]')?'r':l.includes('[WARN]')?'y':'d';return'<div class='+c+'>'+l.replace(/</g,'&lt;')+'</div>';}).join('')||'<div class=d>No logs.</div>';
+    if(el)el.innerHTML=logs.reverse().slice(0,80).map(l=>{const c=l.includes('[OK]')?'g':l.includes('[ERROR]')?'r':l.includes('[WARN]')?'y':'d';return'<div class='+c+'>'+l.replace(/</g,'&lt;')+'</div>';}).join('')||'<div class=d>暂无日志。</div>';
   });
   fetch('/netlogs').then(r=>r.json()).then(logs=>{
     const el=document.getElementById('netlogs');
-    if(el)el.innerHTML=logs.reverse().slice(0,100).map(l=>{const c=l.includes('✓')?'g':l.includes('✗')?'r':'d';return'<div class='+c+'>'+l.replace(/</g,'&lt;')+'</div>';}).join('')||'<div class=d>No requests.</div>';
+    if(el)el.innerHTML=logs.reverse().slice(0,100).map(l=>{const c=l.includes('✓')?'g':l.includes('✗')?'r':'d';return'<div class='+c+'>'+l.replace(/</g,'&lt;')+'</div>';}).join('')||'<div class=d>暂无请求。</div>';
   });
 }
 setInterval(refresh,3000);
@@ -390,7 +390,7 @@ function copyLogs(id){
   fetch(id==='applogs'?'/logs':'/netlogs').then(r=>r.json()).then(logs=>{
     const text=logs.reverse().join('\n');
     const b=document.getElementById('copy-'+id);
-    const done=()=>{const orig=b.textContent;b.textContent='Copied!';setTimeout(()=>b.textContent=orig,1500);};
+    const done=()=>{const orig=b.textContent;b.textContent='已复制！';setTimeout(()=>b.textContent=orig,1500);};
     // navigator.clipboard only exists in a secure context (HTTPS/localhost). This
     // page is served over plain HTTP on a LAN IP, so it's usually undefined — fall
     // back to a hidden textarea + execCommand, which works in insecure contexts.
@@ -406,8 +406,8 @@ function legacyCopy(text,done,b){
     document.body.appendChild(ta);ta.focus();ta.select();
     const ok=document.execCommand('copy');
     document.body.removeChild(ta);
-    if(ok)done();else{b.textContent='Copy failed';setTimeout(()=>b.textContent='Copy',1500);}
-  }catch(e){b.textContent='Copy failed';setTimeout(()=>b.textContent='Copy',1500);}
+    if(ok)done();else{b.textContent='复制失败';setTimeout(()=>b.textContent='复制',1500);}
+  }catch(e){b.textContent='复制失败';setTimeout(()=>b.textContent='复制',1500);}
 }
 </script>
 </head><body>
@@ -415,119 +415,119 @@ function legacyCopy(text,done,b){
 <p class=sub>${serverUrl()}</p>
 
 <div class=card>
-<h2>Status</h2>
+<h2>状态</h2>
 <div id=status>
-<div class=row><div class="dot ${if(has)"dot-g" else "dot-r"}"></div><div><div class=label>Music-User-Token</div>${if(has)"<div class=sub2>$preview</div>" else "<div class=sub2 style=color:#555>Not set — paste below</div>"}</div></div>
+<div class=row><div class="dot ${if(has)"dot-g" else "dot-r"}"></div><div><div class=label>Music-User-Token</div>${if(has)"<div class=sub2>$preview</div>" else "<div class=sub2 style=color:#555>未设置 — 请在下方粘贴</div>"}</div></div>
 </div>
 </div>
 
 <div class=card>
-<h2>Set Token</h2>
+<h2>设置令牌</h2>
 <form method=POST action=/set-token>
-<textarea name=mut placeholder="eyJra… paste your Music-User-Token here"></textarea>
-<button class="btn btn-p" type=submit>Save Token</button>
+<textarea name=mut placeholder="eyJra… 在此粘贴你的 Music-User-Token"></textarea>
+<button class="btn btn-p" type=submit>保存令牌</button>
 </form>
-${if(has)"<form method=POST action=/clear-token><button class='btn btn-s' type=submit>Clear Token</button></form>" else ""}
+${if(has)"<form method=POST action=/clear-token><button class='btn btn-s' type=submit>清除令牌</button></form>" else ""}
 </div>
 
 <div class=card>
-<h2>Lyrics Offset</h2>
-<div class=row><div class=label>Current offset</div><div class=sub2 style=color:#aaa>${currentOffset}ms</div></div>
+<h2>歌词偏移</h2>
+<div class=row><div class=label>当前偏移</div><div class=sub2 style=color:#aaa>${currentOffset}ms</div></div>
 <form method=POST action=/set-lyrics-offset>
 <input name=offset type=number value="$currentOffset" placeholder="0" style="width:100%;background:#1c1c1e;border:1.5px solid #2c2c2e;border-radius:8px;color:#e5e5e7;font-family:monospace;font-size:13px;padding:10px;outline:none;margin-top:4px">
-<button class="btn btn-p" type=submit style=margin-top:8px>Set Offset (ms)</button>
+<button class="btn btn-p" type=submit style=margin-top:8px>设置偏移（毫秒）</button>
 </form>
-<div style="font-size:10px;color:#555;margin-top:8px">Positive = lyrics show earlier. Negative = later. Try +200 if lyrics feel late.</div>
+<div style="font-size:10px;color:#555;margin-top:8px">正值 = 歌词提前显示，负值 = 延后。如果歌词偏慢可尝试 +200。</div>
 </div>
 
 <div class=card>
-<h2>Beat Latency</h2>
-<div class=row><div class=label>Current latency</div><div class=sub2 style=color:#aaa>${currentBeatLatency}ms</div></div>
+<h2>节拍延迟</h2>
+<div class=row><div class=label>当前延迟</div><div class=sub2 style=color:#aaa>${currentBeatLatency}ms</div></div>
 <form method=POST action=/set-beat-latency>
 <input name=latency type=range min=0 max=500 step=10 value="$currentBeatLatency" oninput="document.getElementById('bv').textContent=this.value+'ms'" style="width:100%;accent-color:#fa233b;margin-top:8px">
 <div style="font-size:12px;color:#aaa;text-align:center;margin-top:4px"><span id=bv>${currentBeatLatency}ms</span></div>
-<button class="btn btn-p" type=submit style=margin-top:8px>Apply &amp; Reset</button>
+<button class="btn btn-p" type=submit style=margin-top:8px>应用并重置</button>
 </form>
-<div style="font-size:10px;color:#555;margin-top:8px">0 = TV speakers. ~200 = typical Bluetooth. Resets beat buffer on apply.</div>
+<div style="font-size:10px;color:#555;margin-top:8px">0 = 电视扬声器，约 200 = 常见蓝牙延迟。应用时会重置节拍缓冲。</div>
 </div>
 
 <div class=card>
-<h2>Computer (proxy server)</h2>
-<div class=row><div class=label>Current</div><div class=sub2 style=color:#aaa>${if (serverIp.isEmpty()) "not set" else serverIp}</div></div>
+<h2>电脑（代理服务器）</h2>
+<div class=row><div class=label>当前</div><div class=sub2 style=color:#aaa>${if (serverIp.isEmpty()) "未设置" else serverIp}</div></div>
 <form method=POST action=/set-server-ip>
 <input name=serverip type=text inputmode=decimal placeholder="192.168.1.190" value="$serverIp" style="width:100%;box-sizing:border-box;padding:10px;margin-top:8px;border-radius:6px;border:1px solid #333;background:#0d0d0d;color:#fff;font-family:monospace;font-size:15px">
-<button class="btn btn-p" type=submit style=margin-top:8px>Set Computer IP</button>
+<button class="btn btn-p" type=submit style=margin-top:8px>设置电脑 IP</button>
 </form>
-<div style="font-size:10px;color:#555;margin-top:8px">Port 3000 is assumed. Needed for browse, library, search and lyrics. Leave blank to use the built-in default.</div>
+<div style="font-size:10px;color:#555;margin-top:8px">默认使用 3000 端口。浏览、资料库、搜索和歌词都需要它。留空则使用内置默认值。</div>
 </div>
 
 <div class=card>
-<h2>Standalone mode (no PC)</h2>
-<div class=row><div class=label>Status</div><div class=sub2 style="color:${if (standaloneOn) "#6bcb77" else "#aaa"}">${if (standaloneOn) "ON — everything on the TV" else "OFF — using the PC server"}</div></div>
+<h2>独立播放模式（无需电脑）</h2>
+<div class=row><div class=label>状态</div><div class=sub2 style="color:${if (standaloneOn) "#6bcb77" else "#aaa"}">${if (standaloneOn) "开 — 全部在电视上处理" else "关 — 使用电脑服务器"}</div></div>
 <form method=POST action=/set-standalone>
 <input type=hidden name=standalone value="${if (standaloneOn) "0" else "1"}">
-<button class="btn ${if (standaloneOn) "" else "btn-p"}" type=submit style=margin-top:8px>${if (standaloneOn) "Turn OFF" else "Turn ON"}</button>
+<button class="btn ${if (standaloneOn) "" else "btn-p"}" type=submit style=margin-top:8px>${if (standaloneOn) "关闭" else "开启"}</button>
 </form>
-<div style="font-size:10px;color:#555;margin-top:8px">Talks to Apple directly for browse, library, search, artwork, lyrics AND playback — the PC is not needed at all. Songs start in ~1s instead of 15-20s. Trade-off: some tracks have segment gaps the PC remux repairs, so audio can chop. Applies from the next song.</div>
+<div style="font-size:10px;color:#555;margin-top:8px">直接连接 Apple 获取浏览、资料库、搜索、封面、歌词并直接播放 — 完全不需要电脑。歌曲约 1 秒起播，而不是 15-20 秒。代价：部分曲目的音源分段存在间隙（电脑重封装可修复），音频可能有轻微爆音。从下一首歌开始生效。</div>
 </div>
 
 <div class=card>
-<h2>Volume Leveling</h2>
-<div class=row><div class=label>Status</div><div class=sub2 style="color:${if (volLevelOn) "#6bcb77" else "#aaa"}">${if (volLevelOn) "ON — evening out loudness" else "OFF — each track at its own level"}</div></div>
+<h2>音量均衡</h2>
+<div class=row><div class=label>状态</div><div class=sub2 style="color:${if (volLevelOn) "#6bcb77" else "#aaa"}">${if (volLevelOn) "开 — 正在拉平响度" else "关 — 每首曲目按原始音量"}</div></div>
 <form method=POST action=/set-volume-leveling>
 <input type=hidden name=vol value="${if (volLevelOn) "0" else "1"}">
-<button class="btn ${if (volLevelOn) "" else "btn-p"}" type=submit style=margin-top:8px>${if (volLevelOn) "Turn OFF" else "Turn ON"}</button>
+<button class="btn ${if (volLevelOn) "" else "btn-p"}" type=submit style=margin-top:8px>${if (volLevelOn) "关闭" else "开启"}</button>
 </form>
-<div style="font-size:10px;color:#555;margin-top:8px">Slow automatic gain so quiet masters come up and loud ones come down. Takes effect immediately. Watch it work in the App Logs (VOL lines).</div>
+<div style="font-size:10px;color:#555;margin-top:8px">缓慢自动增益，让偏安静的母带升压、偏响的降压。立即生效。可在应用日志（VOL 行）中查看。</div>
 </div>
 
 <div class=card>
-<h2>Background Play</h2>
-<div class=row><div class=label>Status</div><div class=sub2 style="color:${if (bgPlayOn) "#6bcb77" else "#aaa"}">${if (bgPlayOn) "ON — keeps playing in background" else "OFF — pauses when you leave"}</div></div>
+<h2>后台播放</h2>
+<div class=row><div class=label>状态</div><div class=sub2 style="color:${if (bgPlayOn) "#6bcb77" else "#aaa"}">${if (bgPlayOn) "开 — 后台继续播放" else "关 — 离开时暂停"}</div></div>
 <form method=POST action=/set-background-play>
 <input type=hidden name=bg value="${if (bgPlayOn) "0" else "1"}">
-<button class="btn ${if (bgPlayOn) "" else "btn-p"}" type=submit style=margin-top:8px>${if (bgPlayOn) "Turn OFF" else "Turn ON"}</button>
+<button class="btn ${if (bgPlayOn) "" else "btn-p"}" type=submit style=margin-top:8px>${if (bgPlayOn) "关闭" else "开启"}</button>
 </form>
-<div style="font-size:10px;color:#555;margin-top:8px">Applies on the next app launch.</div>
+<div style="font-size:10px;color:#555;margin-top:8px">在下次启动应用时生效。</div>
 </div>
 
 <div class=card>
-<h2>Crossfade</h2>
-<div class=row><div class=label>Current length</div><div class=sub2 style=color:#aaa>${crossfadeSec}s</div></div>
+<h2>淡入淡出</h2>
+<div class=row><div class=label>当前时长</div><div class=sub2 style=color:#aaa>${crossfadeSec}s</div></div>
 <form method=POST action=/set-crossfade>
 <input name=crossfade type=range min=${CrossfadePreferences.MIN_MS} max=${CrossfadePreferences.MAX_MS} step=500 value="$currentCrossfade" oninput="document.getElementById('cv').textContent=(this.value/1000).toFixed(1)+'s'" style="width:100%;accent-color:#fa233b;margin-top:8px">
 <div style="font-size:12px;color:#aaa;text-align:center;margin-top:4px"><span id=cv>${crossfadeSec}s</span></div>
-<button class="btn btn-p" type=submit style=margin-top:8px>Set Crossfade</button>
+<button class="btn btn-p" type=submit style=margin-top:8px>设置淡入淡出</button>
 </form>
-<div style="font-size:10px;color:#555;margin-top:8px">Applies from the next song — a fade already running keeps its length. Longer fades need the next track prefetched earlier.</div>
+<div style="font-size:10px;color:#555;margin-top:8px">从下一首歌开始生效 — 正在进行的淡出保持原时长。更长的淡出需要更早预取下一首。</div>
 </div>
 
 <div class=card>
-<h2>Bug Report</h2>
-<div class=row><div class=label>Last crash</div><div class=sub2 style="color:${if (com.applemusicktv.util.CrashReporter.lastCrash(context) != null) "#ff3b30" else "#6bcb77"}">${if (com.applemusicktv.util.CrashReporter.lastCrash(context) != null) "crash on file" else "none"}</div></div>
-<a class="btn btn-p" href=/report download style=text-decoration:none>Download Bug Report</a>
-<form method=POST action=/clear-crash><button class="btn btn-s" type=submit>Clear crash log</button></form>
-<div style="font-size:10px;color:#555;margin-top:8px">Bundles app version, device, the last crash and recent app + network logs into one text file to share.</div>
+<h2>问题反馈</h2>
+<div class=row><div class=label>最近崩溃</div><div class=sub2 style="color:${if (com.applemusicktv.util.CrashReporter.lastCrash(context) != null) "#ff3b30" else "#6bcb77"}">${if (com.applemusicktv.util.CrashReporter.lastCrash(context) != null) "有崩溃记录" else "无"}</div></div>
+<a class="btn btn-p" href=/report download style=text-decoration:none>下载反馈报告</a>
+<form method=POST action=/clear-crash><button class="btn btn-s" type=submit>清除崩溃日志</button></form>
+<div style="font-size:10px;color:#555;margin-top:8px">将应用版本、设备信息、最近崩溃以及近期应用和网络日志打包成一个文本文件以便分享。</div>
 </div>
 
 <div class=card>
-<h2>How to get your token</h2>
+<h2>如何获取你的令牌</h2>
 <ol>
-<li>Open <strong style=color:#ccc>music.apple.com</strong> in Chrome · sign in</li>
-<li>DevTools (F12) → Network tab</li>
-<li>Play any song</li>
-<li>Find request to <code>amp-api-edge.music.apple.com</code></li>
-<li>Copy the <code>Media-User-Token</code> request header value</li>
+<li>用 Chrome 打开 <strong style=color:#ccc>music.apple.com</strong> · 登录</li>
+<li>开发者工具（F12）→ Network（网络）面板</li>
+<li>播放任意歌曲</li>
+<li>找到发往 <code>amp-api-edge.music.apple.com</code> 的请求</li>
+<li>复制请求头 <code>Media-User-Token</code> 的值</li>
 </ol>
 </div>
 
 <div class=card>
-<div class=rbar><h2 style=margin:0>Network Activity</h2><div style=display:flex;gap:6px><button class=rbtn id=copy-netlogs onclick="copyLogs('netlogs')">Copy</button><button class=rbtn onclick=refresh()>↻</button></div></div>
+<div class=rbar><h2 style=margin:0>网络活动</h2><div style=display:flex;gap:6px><button class=rbtn id=copy-netlogs onclick="copyLogs('netlogs')">复制</button><button class=rbtn onclick=refresh()>↻</button></div></div>
 <div class=logs id=netlogs>$netRows</div>
 </div>
 
 <div class=card>
-<div class=rbar><h2 style=margin:0>App Logs</h2><div style=display:flex;gap:6px><button class=rbtn id=copy-applogs onclick="copyLogs('applogs')">Copy</button><button class=rbtn onclick=refresh()>↻</button></div></div>
+<div class=rbar><h2 style=margin:0>应用日志</h2><div style=display:flex;gap:6px><button class=rbtn id=copy-applogs onclick="copyLogs('applogs')">复制</button><button class=rbtn onclick=refresh()>↻</button></div></div>
 <div class=logs id=applogs>$logRows</div>
 </div>
 </body></html>"""

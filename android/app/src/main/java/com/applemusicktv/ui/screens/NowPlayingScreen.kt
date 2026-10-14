@@ -157,7 +157,7 @@ fun NowPlayingScreen(
 
         if (song == null) {
             Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text("Nothing playing", color = Color(0xFF666666), fontSize = 18.sp)
+                Text("未在播放", color = Color(0xFF666666), fontSize = 18.sp)
             }
             return@Box
         }
@@ -172,12 +172,12 @@ fun NowPlayingScreen(
             }
         }
         val sleepLabel = when {
-            state.sleepAfterSong -> "Sleep: end of song"
+            state.sleepAfterSong -> "睡眠：本曲结束后"
             state.sleepTimerEndsAt != null -> {
                 val remaining = (state.sleepTimerEndsAt!! - System.currentTimeMillis()).coerceAtLeast(0)
                 val mins = remaining / 60_000
                 val secs = (remaining % 60_000) / 1_000
-                "Sleep: ${mins}:${secs.toString().padStart(2, '0')}"
+                "睡眠：${mins}:${secs.toString().padStart(2, '0')}"
             }
             else -> null
         }
@@ -289,7 +289,7 @@ fun NowPlayingScreen(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                     ) {
                         Box(Modifier.size(6.dp).clip(RoundedCornerShape(3.dp)).background(Color.White))
-                        Text("LIVE", color = Color.White, fontSize = 11.sp,
+                        Text("直播", color = Color.White, fontSize = 11.sp,
                             fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
                     }
                 }
@@ -415,21 +415,21 @@ fun NowPlayingScreen(
                             verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
                             if (showSleepSubmenu) {
-                                NpMenuItem("Back", Modifier.focusRequester(menuFocus), icon = Glyph.BACK) { showSleepSubmenu = false }
+                                NpMenuItem("返回", Modifier.focusRequester(menuFocus), icon = Glyph.BACK) { showSleepSubmenu = false }
                                 if (state.sleepTimerEndsAt != null || state.sleepAfterSong)
-                                    NpMenuItem("Cancel Timer") { playerVm.cancelSleepTimer(); showOptionsMenu = false }
-                                NpMenuItem("End of Song", checked = state.sleepAfterSong) { playerVm.setSleepAfterSong(); showOptionsMenu = false }
+                                    NpMenuItem("取消定时") { playerVm.cancelSleepTimer(); showOptionsMenu = false }
+                                NpMenuItem("本曲结束后", checked = state.sleepAfterSong) { playerVm.setSleepAfterSong(); showOptionsMenu = false }
                                 listOf(15, 30, 45, 60).forEach { min ->
-                                    NpMenuItem("$min minutes") { playerVm.setSleepTimer(min); showOptionsMenu = false }
+                                    NpMenuItem("$min 分钟") { playerVm.setSleepTimer(min); showOptionsMenu = false }
                                 }
                             } else {
                                 val timerLabel = when {
-                                    state.sleepAfterSong -> "Sleep: End of Song"
+                                    state.sleepAfterSong -> "睡眠：本曲结束后"
                                     state.sleepTimerEndsAt != null -> {
                                         val m = ((state.sleepTimerEndsAt!! - System.currentTimeMillis()) / 60_000).coerceAtLeast(0)
-                                        "Sleep Timer (${m}m left)"
+                                        "睡眠定时（剩 ${m} 分钟）"
                                     }
-                                    else -> "Sleep Timer"
+                                    else -> "睡眠定时"
                                 }
                                 val timerOn = state.sleepAfterSong || state.sleepTimerEndsAt != null
                                 NpMenuItem(timerLabel, Modifier.focusRequester(menuFocus), icon = Glyph.MOON, checked = timerOn) { showSleepSubmenu = true }
@@ -437,14 +437,14 @@ fun NowPlayingScreen(
                                 // Settings items leave the menu open so you can see the label
                                 // flip and keep cycling. Only navigation and the sleep timer
                                 // close it; Back dismisses.
-                                NpMenuItem("Shuffle", icon = Glyph.SHUFFLE, checked = state.isShuffled) { playerVm.toggleShuffle() }
-                                val repeatLabel = when (state.repeatMode) { RepeatMode.Off -> "Repeat: Off"; RepeatMode.All -> "Repeat: All"; RepeatMode.One -> "Repeat: One" }
+                                NpMenuItem("随机播放", icon = Glyph.SHUFFLE, checked = state.isShuffled) { playerVm.toggleShuffle() }
+                                val repeatLabel = when (state.repeatMode) { RepeatMode.Off -> "重复：关闭"; RepeatMode.All -> "重复：全部"; RepeatMode.One -> "重复：单曲" }
                                 NpMenuItem(repeatLabel, icon = if (state.repeatMode == RepeatMode.One) Glyph.REPEAT_ONE else Glyph.REPEAT, checked = state.repeatMode != RepeatMode.Off) { playerVm.toggleRepeat() }
-                                if (state.lyrics.isNotEmpty()) NpMenuItem("Full-Screen Lyrics", icon = Glyph.LYRICS) { fullScreenLyrics = true; showOptionsMenu = false }
-                                NpMenuItem("Add to…", icon = Glyph.ADD_TO) { showAddTo = true; showOptionsMenu = false }
-                                NpMenuItem("Start Screensaver", icon = Glyph.STAR) { lastInteractionMs = System.currentTimeMillis(); screensaverOn = true; showOptionsMenu = false }
-                                if (song.artistId != null) NpMenuItem("Go to Artist", icon = Glyph.ARTIST) { onArtistClick(song.artistId); showOptionsMenu = false }
-                                if (song.albumId != null) NpMenuItem("Go to Album", icon = Glyph.ALBUM) { onAlbumClick(song.albumId); showOptionsMenu = false }
+                                if (state.lyrics.isNotEmpty()) NpMenuItem("全屏歌词", icon = Glyph.LYRICS) { fullScreenLyrics = true; showOptionsMenu = false }
+                                NpMenuItem("添加到…", icon = Glyph.ADD_TO) { showAddTo = true; showOptionsMenu = false }
+                                NpMenuItem("启动屏保", icon = Glyph.STAR) { lastInteractionMs = System.currentTimeMillis(); screensaverOn = true; showOptionsMenu = false }
+                                if (song.artistId != null) NpMenuItem("前往艺人", icon = Glyph.ARTIST) { onArtistClick(song.artistId); showOptionsMenu = false }
+                                if (song.albumId != null) NpMenuItem("前往专辑", icon = Glyph.ALBUM) { onAlbumClick(song.albumId); showOptionsMenu = false }
                             }
                         }
                     }
@@ -476,9 +476,9 @@ fun NowPlayingScreen(
             Column(modifier = Modifier.weight(1f).fillMaxHeight().graphicsLayer { alpha = if (rightIsLyrics) 1f else chromeAlpha }) {
                 val label = when {
                     state.isLiveRadio -> ""       // live radio has no queue/lyrics panel
-                    showQueue -> "Queue  •  Menu = Lyrics"
-                    state.lyrics.isNotEmpty() -> "Lyrics  •  Menu = Queue"
-                    else -> "Queue"
+                    showQueue -> "队列  •  Menu = 歌词"
+                    state.lyrics.isNotEmpty() -> "歌词  •  Menu = 队列"
+                    else -> "队列"
                 }
                 Text(
                     label,
@@ -565,7 +565,7 @@ private fun BoxScope.NextUpToast(progressState: androidx.compose.runtime.State<L
             .background(Color(0xE6161616), RoundedCornerShape(10.dp))
             .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
-        Text("NEXT", style = TextStyle(fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFA233B), letterSpacing = 1.5.sp))
+        Text("接下来", style = TextStyle(fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFA233B), letterSpacing = 1.5.sp))
         Text(title, maxLines = 1, style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White))
     }
 }
@@ -1719,14 +1719,14 @@ private fun QueuePanel(
     }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Up Next", fontSize = 13.sp, color = Color(0xFFAAAAAA), fontWeight = FontWeight.Medium)
-            if (movingIndex != null) Text("Hold OK to drop", fontSize = 10.sp, color = Color(0xFF888888))
+            Text("即将播放", fontSize = 13.sp, color = Color(0xFFAAAAAA), fontWeight = FontWeight.Medium)
+            if (movingIndex != null) Text("按住 OK 键放置", fontSize = 10.sp, color = Color(0xFF888888))
         }
         Spacer(Modifier.height(12.dp))
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (userQueue.isNotEmpty()) {
                 item {
-                    Text("Next Up", fontSize = 10.sp, color = Color(0xFFFA233B), fontWeight = FontWeight.SemiBold,
+                    Text("待播清单", fontSize = 10.sp, color = Color(0xFFFA233B), fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
                 }
                 items(userQueue.size, key = { "uq_${userQueue[it].id}_$it" }) { idx ->
@@ -1751,7 +1751,7 @@ private fun QueuePanel(
                     }
                 }
                 item {
-                    Text("From Queue", fontSize = 10.sp, color = Color(0xFF666666), fontWeight = FontWeight.SemiBold,
+                    Text("来自播放队列", fontSize = 10.sp, color = Color(0xFF666666), fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
                 }
             }
@@ -1814,9 +1814,9 @@ private fun QueuePanel(
 
 /** "Off" / "5 min" / "1 h" / "2 h" for a screensaver timeout in minutes. */
 internal fun screensaverLabel(min: Int): String = when {
-    min <= 0    -> "Off"
-    min % 60 == 0 -> "${min / 60} h"
-    else        -> "$min min"
+    min <= 0    -> "关闭"
+    min % 60 == 0 -> "${min / 60} 小时"
+    else        -> "$min 分钟"
 }
 
 private enum class TransportIcon { Play, Pause, Prev, Next, Panel }

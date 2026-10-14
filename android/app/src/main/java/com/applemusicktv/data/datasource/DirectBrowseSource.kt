@@ -32,7 +32,7 @@ class DirectBrowseSource @Inject constructor(
         val ea = attrs["editorialArtwork"] as? Map<*, *>
         return AlbumDto(
             id = item["id"] as? String ?: return null,
-            title = (attrs["name"] ?: "Unknown") as? String ?: "Unknown",
+            title = (attrs["name"] ?: "未知") as? String ?: "未知",
             artistName = (attrs["artistName"] ?: attrs["curatorName"] ?: "") as? String ?: "",
             artworkUrl = url,
             type = item["type"] as? String ?: "albums",
@@ -69,7 +69,7 @@ class DirectBrowseSource @Inject constructor(
         val cover = ((ea?.get("subscriptionCover") ?: ea?.get("brandLogo") ?: attrs["artwork"]) as? Map<*, *>)?.get("url") as? String
         val url = art(cover) ?: return null
         val isApple = item["type"] == "apple-curators"
-        val name = ((attrs["name"] ?: "Unknown") as? String ?: "Unknown")
+        val name = ((attrs["name"] ?: "未知") as? String ?: "未知")
             .replace(Regex("^Apple Music (?=\\S)"), "").replace(Regex("^Apple (?=\\S)"), "")
         return AlbumDto(
             id = (if (isApple) "ac-" else "c-") + (item["id"] as? String ?: return null),
@@ -128,7 +128,7 @@ class DirectBrowseSource @Inject constructor(
                     val r = rec as? Map<*, *> ?: continue
                     val attrs = r["attributes"] as? Map<*, *> ?: emptyMap<String, Any>()
                     val title = ((attrs["title"] as? Map<*, *>)?.get("stringForDisplay") as? String)
-                        ?: (attrs["title"] as? String) ?: "For You"
+                        ?: (attrs["title"] as? String) ?: "为你推荐"
                     val kind = attrs["kind"] as? String
                     val contents = ((r["relationships"] as? Map<*, *>)?.get("contents") as? Map<*, *>)?.get("data")
                     val items = (contents as? List<*>).orEmpty()
@@ -155,7 +155,7 @@ class DirectBrowseSource @Inject constructor(
                     topPicks += lead.copy(title = title)
                     if (topPicks.size >= 10) break
                 }
-                if (topPicks.size >= 3) sections.add(0, "Top Picks for You" to topPicks)
+                if (topPicks.size >= 3) sections.add(0, "为你精选" to topPicks)
                 android.util.Log.i("AMHome", "recommendation sections=${sections.size} picks=${topPicks.size}")
             }.onFailure { android.util.Log.w("AMHome", "recommendations failed: ${it.message}") }
         }
@@ -175,7 +175,7 @@ class DirectBrowseSource @Inject constructor(
                             releaseDate = null, trackCount = 0,
                         )
                     }
-                    if (items.isNotEmpty()) sections += "Find Your Mood" to items
+                    if (items.isNotEmpty()) sections += "找到你的心情" to items
                 }
         }.onFailure { android.util.Log.w("AMHome", "moods failed: ${it.message}") }
 
@@ -217,7 +217,7 @@ class DirectBrowseSource @Inject constructor(
         val url = art((attrs["artwork"] as? Map<*, *>)?.get("url") as? String) ?: return null
         return AlbumDto(
             id = m["id"] as? String ?: return null,
-            title = (attrs["name"] ?: "Unknown") as? String ?: "Unknown",
+            title = (attrs["name"] ?: "未知") as? String ?: "未知",
             artistName = (attrs["artistName"] ?: "") as? String ?: "",
             artworkUrl = url,
             type = "songs",
@@ -235,7 +235,7 @@ class DirectBrowseSource @Inject constructor(
         return com.applemusicktv.data.network.SongDto(
             id = m["id"] as? String ?: return null,
             type = "music-videos",
-            title = (attrs["name"] ?: "Unknown") as? String ?: "Unknown",
+            title = (attrs["name"] ?: "未知") as? String ?: "未知",
             artistName = (attrs["artistName"] ?: "") as? String ?: "",
             artistId = relId("artists"),
             albumId = relId("albums"),
@@ -321,12 +321,12 @@ class DirectBrowseSource @Inject constructor(
                 featured += obj
             }
             if (featured.size >= 2)
-                sections.add(0, com.applemusicktv.data.network.HomeSection("New", featured, style = "spotlight"))
+                sections.add(0, com.applemusicktv.data.network.HomeSection("新发布", featured, style = "spotlight"))
         }
         // Fallback: charts, so the tab is never blank if the editorial page fails.
         if (sections.isEmpty()) {
             runCatching { chart(api.charts(sf, types = "songs", limit = 20), "songs")?.let { sections += com.applemusicktv.data.network.HomeSection(it.first, it.second) } }
-            runCatching { chart(api.charts(sf, types = "albums", limit = 20), "albums")?.let { sections += com.applemusicktv.data.network.HomeSection("New Releases", it.second) } }
+            runCatching { chart(api.charts(sf, types = "albums", limit = 20), "albums")?.let { sections += com.applemusicktv.data.network.HomeSection("最新发行", it.second) } }
             runCatching { chart(api.charts(sf, types = "playlists", limit = 20), "playlists")?.let { sections += com.applemusicktv.data.network.HomeSection(it.first, it.second) } }
         }
         return sections
@@ -341,8 +341,8 @@ class DirectBrowseSource @Inject constructor(
             val results = raw["results"] as? Map<*, *>
             val pl = listOfItems(((results?.get("playlists") as? List<*>)?.firstOrNull() as? Map<*, *>)?.get("data"))
             val al = listOfItems(((results?.get("albums") as? List<*>)?.firstOrNull() as? Map<*, *>)?.get("data"))
-            if (pl.isNotEmpty()) sections += "Top Playlists" to pl
-            if (al.isNotEmpty()) sections += "Top Albums" to al
+            if (pl.isNotEmpty()) sections += "热门播放列表" to pl
+            if (al.isNotEmpty()) sections += "热门专辑" to al
         }
         return sections
     }

@@ -430,7 +430,7 @@ fun AppShell(modifier: Modifier = Modifier) {
                     .padding(horizontal = 16.dp, vertical = 10.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    androidx.compose.material3.Text("Token expired — re-enter at :8080", color = androidx.compose.ui.graphics.Color.White, fontSize = 13.sp)
+                    androidx.compose.material3.Text("Token 已过期 — 请在 :8080 重新输入", color = androidx.compose.ui.graphics.Color.White, fontSize = 13.sp)
                     androidx.tv.material3.Surface(
                         onClick = { playerVm.dismissMutExpired() },
                         shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(50)),
@@ -451,7 +451,7 @@ fun AppShell(modifier: Modifier = Modifier) {
                     .padding(horizontal = 14.dp, vertical = 6.dp),
             ) {
                 androidx.compose.material3.Text(
-                    "PLAYING PREVIEWS — set token at :8080",
+                    "正在播放预览 — 请在 :8080 设置 Token",
                     color = androidx.compose.ui.graphics.Color.White,
                     fontSize = 11.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
@@ -479,7 +479,7 @@ fun AppShell(modifier: Modifier = Modifier) {
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                 ) {
                     androidx.compose.material3.Text(
-                        "Exit Apple Music TV?",
+                        "退出 Apple Music TV？",
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -495,7 +495,7 @@ fun AppShell(modifier: Modifier = Modifier) {
                             ),
                         ) {
                             androidx.compose.material3.Text(
-                                "Cancel",
+                                "取消",
                                 color = Color.White,
                                 modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),
                             )
@@ -522,7 +522,7 @@ fun AppShell(modifier: Modifier = Modifier) {
                             ),
                         ) {
                             androidx.compose.material3.Text(
-                                "Exit",
+                                "退出",
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),

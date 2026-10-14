@@ -120,11 +120,11 @@ fun OnboardingScreen(vm: OnboardingViewModel, onDone: () -> Unit, modifier: Modi
             Spacer(Modifier.weight(1f))
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (s.step > 1) OnbButton("Back", onClick = vm::back)
+                if (s.step > 1) OnbButton("上一步", onClick = vm::back)
                 when (s.step) {
-                    1 -> OnbButton(if (s.hasMut) "Continue" else "Skip — preview only", primary = s.hasMut, modifier = Modifier.focusRequester(primaryFocus), onClick = vm::next)
-                    2, 3 -> OnbButton("Continue", primary = true, modifier = Modifier.focusRequester(primaryFocus), onClick = vm::next)
-                    else -> OnbButton(if (tipsSeenAll) "Start listening" else "See all tips first", primary = tipsSeenAll, enabled = tipsSeenAll, modifier = Modifier.focusRequester(primaryFocus)) { dismissKeyboard(); vm.finish(); onDone() }
+                    1 -> OnbButton(if (s.hasMut) "继续" else "跳过 — 仅预览", primary = s.hasMut, modifier = Modifier.focusRequester(primaryFocus), onClick = vm::next)
+                    2, 3 -> OnbButton("继续", primary = true, modifier = Modifier.focusRequester(primaryFocus), onClick = vm::next)
+                    else -> OnbButton(if (tipsSeenAll) "开始聆听" else "请先看完所有提示", primary = tipsSeenAll, enabled = tipsSeenAll, modifier = Modifier.focusRequester(primaryFocus)) { dismissKeyboard(); vm.finish(); onDone() }
                 }
             }
         }
@@ -133,34 +133,34 @@ fun OnboardingScreen(vm: OnboardingViewModel, onDone: () -> Unit, modifier: Modi
 
 @Composable
 private fun StepAccount(vm: OnboardingViewModel, s: com.applemusicktv.ui.viewmodel.OnboardingState) {
-    StepHeader("Sign in", "Your Apple Music token is pasted from your phone — it's too long to type with a remote.")
+    StepHeader("登录", "Apple Music 令牌由手机粘贴过来 — 太长了，遥控器打不了。")
 
     Row(Modifier.padding(top = 22.dp), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            Text("On your phone, scan this or open:", fontSize = 14.sp, color = Color(0xFF999999))
+            Text("在手机上扫描此二维码，或打开：", fontSize = 14.sp, color = Color(0xFF999999))
             Spacer(Modifier.height(8.dp))
             Text(
-                s.phoneUrl.ifEmpty { "starting web server…" },
+                s.phoneUrl.ifEmpty { "正在启动网页服务器…" },
                 fontSize = 28.sp, fontWeight = FontWeight.Bold,
                 color = Color.White, fontFamily = FontFamily.Monospace,
             )
             Spacer(Modifier.height(18.dp))
             Text(
-                "Paste your Music-User-Token there and this screen will continue on its own.",
+                "在手机页面上粘贴你的 Music-User-Token，此界面会自动继续。",
                 fontSize = 14.sp, color = Color(0xFF888888),
             )
             Spacer(Modifier.height(6.dp))
             Text(
                 when {
-                    s.hasMut && s.tokenPresetOnEntry -> "You already have a token saved. Paste a new one to replace it, or just press Continue."
-                    s.hasMut -> "Token received."
-                    else -> "Waiting for a token…"
+                    s.hasMut && s.tokenPresetOnEntry -> "你已保存过令牌。粘贴新的即可替换，或直接按“继续”。"
+                    s.hasMut -> "已收到令牌。"
+                    else -> "等待令牌…"
                 },
                 fontSize = 14.sp,
                 color = if (s.hasMut) Color(0xFF6BCB77) else Color(0xFF666666),
             )
             Spacer(Modifier.height(18.dp))
-            Text("Without a token you get 30-second previews only.", fontSize = 12.sp, color = Color(0xFF555555))
+            Text("没有令牌只能试听 30 秒预览。", fontSize = 12.sp, color = Color(0xFF555555))
         }
 
         // QR of the same URL. Drawn on a white card with a quiet zone — a code that
@@ -196,18 +196,18 @@ private fun StepAccount(vm: OnboardingViewModel, s: com.applemusicktv.ui.viewmod
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun StepRemote(vm: OnboardingViewModel, s: com.applemusicktv.ui.viewmodel.OnboardingState, detectedFire: Boolean) {
-    val detectedLabel = if (detectedFire) "Fire TV" else "Google TV / other"
-    StepHeader("Your remote", "Detected: $detectedLabel. Change it only if that's wrong.")
+    val detectedLabel = if (detectedFire) "Fire TV" else "Google TV / 其他"
+    StepHeader("你的遥控器", "检测到：$detectedLabel。仅在不正确时才需要更改。")
 
     Column(Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         RemoteOption(
-            "Fire TV remote", "Menu button opens the queue and lyrics.",
+            "Fire TV 遥控器", "Menu 键打开播放队列和歌词。",
             selected = s.remoteChoice == OnboardingPreferences.REMOTE_FIRE ||
                 (s.remoteChoice == OnboardingPreferences.REMOTE_AUTO && detectedFire),
         ) { vm.setRemote(OnboardingPreferences.REMOTE_FIRE) }
 
         RemoteOption(
-            "Google TV / other remote", "No Menu button — an on-screen list button is shown instead.",
+            "Google TV / 其他遥控器", "没有 Menu 键 — 改为显示屏幕上的列表按钮。",
             selected = s.remoteChoice == OnboardingPreferences.REMOTE_GOOGLE ||
                 (s.remoteChoice == OnboardingPreferences.REMOTE_AUTO && !detectedFire),
         ) { vm.setRemote(OnboardingPreferences.REMOTE_GOOGLE) }
@@ -217,7 +217,7 @@ private fun StepRemote(vm: OnboardingViewModel, s: com.applemusicktv.ui.viewmode
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun StepPreferences(vm: OnboardingViewModel, s: com.applemusicktv.ui.viewmodel.OnboardingState) {
-    StepHeader("Crossfade", "How long tracks overlap. Songs from the same album hand off with no fade regardless.")
+    StepHeader("淡入淡出", "曲目之间重叠的时长。同一专辑内的歌曲无论如何都会无缝衔接。")
 
     Row(
         Modifier.padding(top = 24.dp),
@@ -234,7 +234,7 @@ private fun StepPreferences(vm: OnboardingViewModel, s: com.applemusicktv.ui.vie
     }
     Spacer(Modifier.height(16.dp))
     Text(
-        "Changeable any time from the ··· menu, or from the phone page you just used.",
+        "随时可在 ··· 菜单中更改，也可在刚才使用的手机页面上更改。",
         fontSize = 13.sp, color = Color(0xFF666666),
     )
 }
@@ -256,30 +256,30 @@ private fun StepTips(onScreenToggle: Boolean, nextFocus: FocusRequester, onSeenA
     val cards = remember(onScreenToggle) {
         listOf(
             TipCard(
-                TipMock.LONG_PRESS, "Hold OK for more options",
-                "On any song, album or playlist, keep OK pressed for a second. A menu opens — play next, add to queue, go to the artist. This is the big one; nothing on screen tells you it's there.",
+                TipMock.LONG_PRESS, "长按 OK 键查看更多选项",
+                "在任意歌曲、专辑或播放列表上，长按 OK 键一秒。会弹出菜单 — 下一首播放、加入队列、前往艺人。这是最重要的一条；界面上没有任何提示告诉你它在那里。",
             ),
             TipCard(
                 TipMock.LYRICS,
-                if (onScreenToggle) "The three-lines button shows the words" else "The Menu button shows the words",
-                if (onScreenToggle) "It sits next to play and skip. Press it to swap between synced lyrics and what's coming up next."
-                else "The button with three lines on your remote. Press it to swap between synced lyrics and what's coming up next.",
+                if (onScreenToggle) "三横线按钮显示歌词" else "Menu 键显示歌词",
+                if (onScreenToggle) "它在播放和跳过按钮旁边。按一下可在滚动歌词和即将播放之间切换。"
+                else "遥控器上带三条横线的按键。按一下可在滚动歌词和即将播放之间切换。",
             ),
             TipCard(
-                TipMock.SCRUB, "Jump around inside a song",
-                "Press down until the thin bar lights up. Left and right move 10 seconds at a time, OK jumps to that spot.",
+                TipMock.SCRUB, "在歌曲内快进快退",
+                "按向下键直到细进度条亮起。左右键每次移动 10 秒，按 OK 键跳到该位置。",
             ),
             TipCard(
-                TipMock.DOTS_MENU, "The ··· button is your settings",
-                "Sleep timer, shuffle, repeat, Full-Screen Lyrics, the ambient screensaver, Picture-in-Picture — all live here.",
+                TipMock.DOTS_MENU, "··· 按钮就是设置",
+                "睡眠定时、随机播放、重复播放、全屏歌词、氛围屏保、画中画 — 全都在这里。",
             ),
             TipCard(
-                TipMock.PROJECTOR, "Projector mode — let the room breathe",
-                "An ambient mode: the lights go down to black and the album's own colours drift across the whole TV. No controls, no clutter — just the music, made a little bigger. Turn it on from the ··· menu and let it play.",
+                TipMock.PROJECTOR, "投影模式 — 让房间沉浸其中",
+                "一种氛围模式：灯光暗至全黑，专辑自身的色彩在整个电视上缓缓流动。没有控件、没有干扰 — 只有被放大的音乐。在 ··· 菜单中开启，让它自己播放。",
             ),
             TipCard(
-                TipMock.MUSIC_VIDEO, "Music videos, full-screen",
-                "Playlists and artist pages that carry videos play them full-screen, capped at 1080p and streamed as you watch — never fully downloaded. Look for the red MV tag, and use the ⧉ button to pop it into a corner while you browse.",
+                TipMock.MUSIC_VIDEO, "MV 全屏播放",
+                "带视频的播放列表和艺人页面会全屏播放 MV，最高 1080p，边看边播 — 不会完整下载。认准红色 MV 标签，浏览时可用 ⧉ 按钮把它缩到角落里。",
             ),
         )
     }
@@ -307,7 +307,7 @@ private fun StepTips(onScreenToggle: Boolean, nextFocus: FocusRequester, onSeenA
             label = "tipPulseA",
         )
 
-    StepHeader("How to use it", "A few things you won't find on your own.")
+    StepHeader("使用指南", "几条你自己未必能发现的技巧。")
 
     Row(Modifier.padding(top = 20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         // The mock frame — cross-fades between features.
@@ -362,7 +362,7 @@ private fun StepTips(onScreenToggle: Boolean, nextFocus: FocusRequester, onSeenA
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                if (maxSeen >= cards.lastIndex) "All caught up — press down to start." else "Use ‹ › to see the rest.",
+                if (maxSeen >= cards.lastIndex) "已全部看完 — 按向下键开始。" else "用 ‹ › 查看其余提示。",
                 fontSize = 12.sp, color = Color(0xFF666666),
             )
         }
@@ -484,7 +484,7 @@ private fun MockLongPress(pulse: Float) {
                 .padding(vertical = 6.dp, horizontal = 4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            listOf("Play Next", "Add to Queue", "Go to Artist").forEachIndexed { i, t ->
+            listOf("下一首播放", "加入队列", "前往艺人").forEachIndexed { i, t ->
                 Text(
                     t, fontSize = 10.sp, color = if (i == 0) Color.White else Color(0xFFAAAAAA),
                     modifier = Modifier
@@ -571,7 +571,7 @@ private fun MockScrub(pulse: Float) {
             Text("−1:52", fontSize = 11.sp, color = Color(0xFF777777), fontFamily = FontFamily.Monospace)
         }
         Spacer(Modifier.height(10.dp))
-        Text("◄  10s  ►", fontSize = 12.sp, color = Color(0xFFAAAAAA), modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text("◄  10秒  ►", fontSize = 12.sp, color = Color(0xFFAAAAAA), modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
@@ -582,7 +582,7 @@ private fun MockDotsMenu(pulse: Float) {
         Text("···", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally))
         Spacer(Modifier.height(2.dp))
-        listOf("Sleep Timer", "Shuffle", "Repeat", "Full-Screen Lyrics").forEachIndexed { i, t ->
+        listOf("睡眠定时", "随机播放", "重复播放", "全屏歌词").forEachIndexed { i, t ->
             Row(
                 Modifier.fillMaxWidth()
                     .background(
@@ -621,7 +621,7 @@ private fun MockLoading(pulse: Float) {
             }
             MockCircle(50.dp, Color.White)
         }
-        Text("15–20s first time", fontSize = 11.sp, color = Color(0xFF888888),
+        Text("首次需 15–20 秒", fontSize = 11.sp, color = Color(0xFF888888),
             modifier = Modifier.align(Alignment.BottomCenter))
     }
 }

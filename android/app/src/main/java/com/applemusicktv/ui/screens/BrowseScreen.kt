@@ -98,11 +98,11 @@ fun BrowseScreen(
     if (state.error != null) {
         Box(modifier.fillMaxSize(), Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Could not connect to server", color = Color(0xFFFF453A), fontSize = 16.sp)
+                Text("无法连接服务器", color = Color(0xFFFF453A), fontSize = 16.sp)
                 Text(state.error ?: "", color = Color(0xFF555555), fontSize = 12.sp)
                 Spacer(Modifier.height(16.dp))
                 Surface(onClick = vm::load, colors = ClickableSurfaceDefaults.colors(containerColor = Color(0xFFFA233B))) {
-                    Text("Retry", color = Color.White, modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp))
+                    Text("重试", color = Color.White, modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp))
                 }
             }
         }
@@ -111,7 +111,7 @@ fun BrowseScreen(
 
     if (state.shelves.isEmpty()) {
         Box(modifier.fillMaxSize(), Alignment.Center) {
-            Text("No content available", color = Color(0xFF555555), fontSize = 14.sp)
+            Text("暂无内容", color = Color(0xFF555555), fontSize = 14.sp)
         }
         return
     }
@@ -274,7 +274,7 @@ private fun SeeAllCard(size: Int, onClick: () -> Unit) {
                     com.applemusicktv.ui.components.Glyph.NEXT, size = 26.dp, color = Color.White)
             }
         }
-        Text("More", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFF2F2F5),
+        Text("更多", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFF2F2F5),
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp))
     }
 }
