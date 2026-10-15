@@ -41,6 +41,7 @@ class LibraryViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repo: MusicRepository,
     private val mutPrefs: MutPreferences,
+    private val lxPrefs: com.applemusicktv.data.lx.LxPreferences,
     private val moshi: Moshi,
 ) : ViewModel() {
 
@@ -177,9 +178,18 @@ class LibraryViewModel @Inject constructor(
     }
 
     fun refresh() {
-        val mut = mutPrefs.getMUT()
-        if (mut.isEmpty()) {
+        // ZL：本地歌单模式不依赖 MUT——资料库就是本地歌单，直接展示
+        if (mutPrefs.getMUT().isEmpty() && !lxPrefs.isEnabled) {
             _state.value = LibraryState(hasMut = false)
+            return
+        }
+        if (mutPrefs.getMUT().isEmpty()) {
+            _state.update { it.copy(hasMut = true, isLoading = true) }
+            viewModelScope.launch {
+                repo.getLibraryPlaylists().onSuccess { p ->
+                    _state.update { it.copy(playlists = p, isLoading = false) }
+                }
+            }
             return
         }
         _state.update { it.copy(isLoading = true, hasMut = true) }

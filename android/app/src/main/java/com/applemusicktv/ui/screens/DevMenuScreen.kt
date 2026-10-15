@@ -63,11 +63,12 @@ fun DevMenuScreen(
                 ) {
                     Text("搜索与播放使用导入的自定义音源（洛雪 userApi 脚本）", fontSize = 11.sp, color = Color(0xFF777777))
                     ActionBtn(
-                        if (state.lxEnabled) "自定义音源：已启用（按 OK 关闭）" else "自定义音源：已关闭（按 OK 启用）",
+                        if (state.lxEnabled) "自定义音源 · 已启用" else "自定义音源 · 已关闭",
                         if (state.lxEnabled) Color(0xFF1A2A1A) else Color(0xFF2A2A2A),
                     ) { vm.setLxEnabled(!state.lxEnabled) }
 
-                    ActionBtn("扫码导入音源（手机打开网页粘贴链接）", Color(0xFF2A2A2A)) { showQr = true }
+                    ActionBtn("扫码导入音源", Color(0xFF2A2A2A)) { showQr = true }
+                    Text("手机与电视连同一 WiFi，扫码打开导入页粘贴音源链接", fontSize = 10.sp, color = Color(0xFF666666))
 
                     Text("已导入音源（${state.lxScripts.size}）", fontSize = 9.sp, color = Color(0xFF888888), fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
                     if (state.lxScripts.isEmpty()) {

@@ -82,3 +82,4 @@ class LxPreferences @Inject constructor(@ApplicationContext context: Context) {
         private const val KEY_SCRIPTS = "scripts"
     }
 }
+
