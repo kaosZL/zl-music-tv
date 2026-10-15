@@ -14,11 +14,11 @@
 - [ ] 定义 `MusicSource` Kotlin 接口，把 Apple 实现降级为其中一种 Source
 - [ ] App 启动不再强依赖 proxy / MUT（无源时进空态，不卡启动）
 
-### Phase 2 —— lx 音源引擎（核心攻坚）
-- 方案 A：内嵌 QuickJS 运行 lx userApi 脚本（设备端独立）
-- 方案 B：复用原项目 proxy-server 思路，局域网跑 lx-music-source（Node）做转译桥
-- [ ] 音源管理页（导入 .js 脚本 / 扫码导入——复用 ZL_Musicos 的 NanoHTTPD 经验）
-- [ ] 搜索 / 取播放链 / 歌词 三个核心接口打通
+### Phase 2 —— lx 音源引擎（✅ 2026-10-15 落地，方案 A 设备端）
+- [x] QuickJS（quickjs-kt）内嵌引擎：酷我 SDK（搜索/榜单/歌词）+ lx userApi 脚本宿主，JS 载荷 Node 六项预验证
+- [x] 洛雪式导入：设置页「自定义音源」区块（URL 导入/启停/删除），手机网页服务器也留了导入路由
+- [x] 搜索 / 取播放链（320k→128k→flac 降级）/ 歌词 三接口打通；取流走 app 内置 8080 /zlstream 路由 302 直链
+- [ ] 待办：手机网页端「粘贴脚本」卡片、歌单收藏（Phase 3 一起）、更多平台 SDK（kg/wy/tx）
 
 ### Phase 3 —— 播放与歌单落地
 - [ ] ExoPlayer 直接播 http(s) 音频流（去掉 Widevine/EXT-X-KEY 改写链路）
