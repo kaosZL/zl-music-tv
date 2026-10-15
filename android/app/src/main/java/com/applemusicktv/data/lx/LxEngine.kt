@@ -111,20 +111,20 @@ class LxEngine @Inject constructor(
 
     private fun bindBridges(js: QuickJs) {
         // async：HTTP（字符串协议）
-        js.asyncFunction("__zlHttp") { args ->
+        js.asyncFunction<String, String>("__zlHttp") { args ->
             val url = args.getOrNull(0) as? String ?: throw IllegalArgumentException("url")
             val reqJson = args.getOrNull(1) as? String ?: "{}"
             bridgeHttp(url, reqJson)
         }
         // 同步：MD5 / AES（kuwo 榜单签名用；契约与 RN 原生模块一致：base64 进出）
-        js.function("__zlMd5") { args ->
+        js.function<Any?, String>("__zlMd5") { args ->
             md5Hex(args.getOrNull(0) as? String ?: "")
         }
-        js.function("__zlAesEncrypt") { args ->
+        js.function<Any?, String>("__zlAesEncrypt") { args ->
             aes(args.getOrNull(0) as? String, args.getOrNull(1) as? String,
                 args.getOrNull(2) as? String, args.getOrNull(3) as? String, encrypt = true) ?: ""
         }
-        js.function("__zlAesDecrypt") { args ->
+        js.function<Any?, String>("__zlAesDecrypt") { args ->
             aes(args.getOrNull(0) as? String, args.getOrNull(1) as? String,
                 args.getOrNull(2) as? String, args.getOrNull(3) as? String, encrypt = false) ?: ""
         }
@@ -158,6 +158,9 @@ class LxEngine @Inject constructor(
             JSONObject().put("__netErr", e.message ?: e.toString()).toString()
         }
     }
+
+    /** JS 字符串字面量安全引用（JSON 转义） */
+    private fun jsStr(v: String): String = org.json.JSONObject.quote(v) ?: "\"...\""
 
     private fun md5Hex(input: String): String =
         MessageDigest.getInstance("MD5").digest(input.toByteArray(Charsets.UTF_8))
