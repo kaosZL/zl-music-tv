@@ -72,27 +72,8 @@ fun AppShell(modifier: Modifier = Modifier) {
 
     // First run: setup owns the whole screen. Nothing behind it is usable until the
     // server and token are configured, so there is no nav bar and nothing to browse.
-    val onboardingVm: com.applemusicktv.ui.viewmodel.OnboardingViewModel = hiltViewModel()
-    var showOnboarding by remember { mutableStateOf(!playerVm.onboardingCompleted()) }
-    // "Replay Setup" in Settings resets the pref and fires this — bring setup up right away
-    // instead of only on the next launch.
-    val replay by playerVm.replayOnboarding.collectAsState()
-    LaunchedEffect(replay) {
-        if (replay) { showOnboarding = true; playerVm.consumeReplayOnboarding() }
-    }
-    if (showOnboarding) {
-        OnboardingScreen(
-            vm = onboardingVm,
-            onDone = {
-                showOnboarding = false
-                playerVm.onOnboardingFinished()
-                homeVm.load()
-                libraryVm.refresh()
-            },
-            modifier = modifier,
-        )
-        return
-    }
+    // ZL 定制：不做首次引导——直接进主界面，音源在设置页扫码导入（老板 2026-10-15 拍板）
+    playerVm.run { if (!onboardingCompleted()) onOnboardingFinished() }
 
     // Transient errors surface as a toast: a TV user is across the room and won't
     // find an inline banner, and silence reads as a crash.

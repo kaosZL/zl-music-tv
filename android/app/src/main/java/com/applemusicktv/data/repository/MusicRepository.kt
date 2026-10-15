@@ -98,11 +98,24 @@ class MusicRepository @Inject constructor(
         if (!useProxy) direct.stationStream(id)
         else apiCall { api.getStationStream(id) }
     suspend fun getAlbum(id: String) =
-        if (!useProxy) direct.album(id).map(::albumFromDto)
+        if (com.applemusicktv.data.lx.LxMapper.isBoardId(id)) {
+            runCatching {
+                val bangId = id.removePrefix("zlboard:")
+                val name = com.applemusicktv.data.lx.LxMapper.parseBoards(lxEngine.boards())
+                    .firstOrNull { it.first == bangId }?.second ?: "榜单"
+                Album(id = id, title = name, artistName = "酷我榜", artworkUrl = null, trackCount = 100)
+            }
+        } else if (!useProxy) direct.album(id).map(::albumFromDto)
         else apiCall { albumFromDto(api.getAlbum(id)) }
 
     suspend fun getAlbumTracks(id: String) =
-        if (!useProxy) direct.albumTracks(id).map { it.map(::songFromDto) }
+        if (com.applemusicktv.data.lx.LxMapper.isBoardId(id)) {
+            runCatching {
+                com.applemusicktv.data.lx.LxMapper.parseSongs(
+                    lxEngine.boardDetail(id.removePrefix("zlboard:"), 1)
+                )
+            }
+        } else if (!useProxy) direct.albumTracks(id).map { it.map(::songFromDto) }
         else apiCall { api.getAlbumTracks(id).tracks.map(::songFromDto) }
 
     // Apple has no "related albums" endpoint — the proxy derives the shelf from the

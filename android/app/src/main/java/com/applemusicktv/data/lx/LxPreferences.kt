@@ -26,7 +26,7 @@ data class LxScript(
 class LxPreferences @Inject constructor(@ApplicationContext context: Context) {
     private val prefs = context.getSharedPreferences("zl_lx_source", Context.MODE_PRIVATE)
 
-    private val _enabledFlow = MutableStateFlow(prefs.getBoolean(KEY_ENABLED, false))
+    private val _enabledFlow = MutableStateFlow(prefs.getBoolean(KEY_ENABLED, true)) // ZL 定制：默认启用
     val enabledFlow: StateFlow<Boolean> = _enabledFlow
 
     private val _scriptsFlow = MutableStateFlow(loadScripts())

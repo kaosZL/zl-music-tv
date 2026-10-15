@@ -43,29 +43,9 @@ fun DevMenuScreen(
 ) {
     val vm: DevMenuViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
-    val pstate by playerVm.state.collectAsState()
-    var pcIpDraft by remember(state.pcServerIp) { mutableStateOf(state.pcServerIp) }
-    var showDev by remember { mutableStateOf(false) }
-    var confirmReset by remember { mutableStateOf(false) }
-    // PC IP is a press-to-edit button, not a live field: a focused BasicTextField pops the
-    // Fire TV IME by itself the moment D-pad focus lands on it.
-    var pcIpEditing by remember { mutableStateOf(false) }
-    val pcIpFocus = remember { FocusRequester() }
-    var lxImportEditing by remember { mutableStateOf(false) }
-    var lxImportDraft by remember { mutableStateOf("") }
-    val lxImportFocus = remember { FocusRequester() }
-    val ctx = LocalContext.current
-    val rootView = androidx.compose.ui.platform.LocalView.current
-    fun hideIme() = runCatching {
-        ctx.getSystemService(android.view.inputmethod.InputMethodManager::class.java)
-            ?.hideSoftInputFromWindow(rootView.windowToken, 0)
-    }
-
-    // Live network activity — polled from the shared NetworkLog buffer.
-    var netLogs by remember { mutableStateOf(emptyList<String>()) }
-    LaunchedEffect(showDev) {
-        while (showDev) { netLogs = vm.networkLogs(); kotlinx.coroutines.delay(1000) }
-    }
+    // ZL 定制：设置页只做音源管理（老板 2026-10-15 拍板）——保留原骨架与焦点流，
+    // 正文区块精简为「音源管理」+「关于」
+    var showQr by remember { mutableStateOf(false) }
 
     Box(modifier.fillMaxSize().background(Color(0xFF0A0A0A))) {
         Column(
@@ -75,348 +55,52 @@ fun DevMenuScreen(
         ) {
             Text("设置", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
 
-            // ── SOFTWARE ──────────────────────────────────────────────────
-            SectionLabel("软件")
-            UpdatesSection(initialUpdate)
-            PhoneServerRow(state.webServerUrl, playerVm)
-
-            // ── PLAYBACK ──────────────────────────────────────────────────
-            SectionLabel("播放")
-            Stepper(
-                label = "淡入淡出", value = "%.1fs".format(state.crossfadeMs / 1000f),
-                sub = "一首歌的结尾与下一首重叠衔接",
-                onDec = { vm.setCrossfade(state.crossfadeMs - 500) },
-                onInc = { vm.setCrossfade(state.crossfadeMs + 500) },
-            )
-            Toggle(
-                label = "独立播放", on = state.standaloneOn,
-                sub = if (state.standaloneOn) "在本机解码 — 无需电脑" else "通过电脑服务器串流",
-                onToggle = { vm.toggleStandalone() },
-            )
-            Toggle(
-                label = "音量均衡", on = pstate.volumeLeveling,
-                sub = if (pstate.volumeLeveling) "让各曲目响度一致" else "每首曲目按原始音量播放",
-                onToggle = { playerVm.toggleVolumeLeveling() },
-            )
-            Toggle(
-                label = "后台播放", on = pstate.backgroundPlayEnabled,
-                sub = if (pstate.backgroundPlayEnabled) "离开应用后继续播放" else "应用切到后台时暂停",
-                onToggle = { playerVm.toggleBackgroundPlay() },
-            )
-
-            // ── NOW PLAYING ───────────────────────────────────────────────
-            SectionLabel("正在播放")
-            Stepper(
-                label = "背景",
-                value = pstate.nowPlayingBackground.label,
-                sub = "彩色光球、投影光晕或纯黑",
-                onDec = { playerVm.stepNowPlayingBackground(-1) },
-                onInc = { playerVm.stepNowPlayingBackground(1) },
-            )
-            Toggle(
-                label = "显示信息", on = pstate.showNowPlayingInfo,
-                sub = if (pstate.showNowPlayingInfo) "显示时钟和面板提示" else "隐藏它们，只看封面",
-                onToggle = { playerVm.toggleNowPlayingInfo() },
-            )
-            // Intensity is the orb SIZE/reactivity; hidden on Black (no orbs). Remembered per mode.
-            if (pstate.nowPlayingBackground.label != "纯黑") Stepper(
-                label = "强度",
-                value = intensityLabel(pstate.beatIntensity),
-                sub = "背景随节拍联动的强度",
-                onDec = { playerVm.stepBeatIntensity(-1) },
-                onInc = { playerVm.stepBeatIntensity(1) },
-            )
-            // Orb drift speed — only meaningful in Projector.
-            if (pstate.nowPlayingBackground.label == "投影") Stepper(
-                label = "光球速度",
-                value = orbSpeedLabel(pstate.orbSpeed),
-                sub = "光球漂移的速度",
-                onDec = { playerVm.stepOrbSpeed(-1) },
-                onInc = { playerVm.stepOrbSpeed(1) },
-            )
-            Stepper(
-                label = "歌词大小",
-                value = lyricsScaleLabel(pstate.lyricsScale),
-                sub = "歌词面板的文字大小",
-                onDec = { playerVm.stepLyricsScale(-1) },
-                onInc = { playerVm.stepLyricsScale(1) },
-            )
-            Toggle(
-                label = "圆角封面", on = pstate.artworkRounded,
-                sub = if (pstate.artworkRounded) "柔和的圆角专辑封面" else "直角专辑封面",
-                onToggle = { playerVm.toggleArtworkRounded() },
-            )
-            Toggle(
-                label = "动态封面", on = pstate.motionArtworkEnabled,
-                sub = if (pstate.motionArtworkEnabled) "可用时播放动画专辑封面" else "关闭 — 减轻设备负担",
-                onToggle = { playerVm.toggleMotionArtwork() },
-            )
-            Toggle(
-                label = "减弱动态效果", on = pstate.reduceMotion,
-                sub = if (pstate.reduceMotion) "背景保持静止" else "背景漂移和脉动",
-                onToggle = { playerVm.toggleReduceMotion() },
-            )
-            Toggle(
-                label = "省电模式", on = pstate.lowPowerMode,
-                sub = if (pstate.lowPowerMode) "简化视觉效果 + 离开正在播放时释放视频解码器（返回时略有停顿）"
-                      else "完整视觉效果 + 跨页面保持视频就绪（无缝返回）",
-                onToggle = { playerVm.toggleLowPowerMode() },
-            )
-            Stepper(
-                label = "屏幕保护",
-                value = screensaverLabel(pstate.screensaverTimeoutMin),
-                sub = "多久无操作后调暗屏幕",
-                onDec = { playerVm.stepScreensaverTimeout(-1) },
-                onInc = { playerVm.stepScreensaverTimeout(1) },
-            )
-            Toggle(
-                label = "氛围屏保", on = pstate.screensaverKeepBackground,
-                sub = if (pstate.screensaverKeepBackground) "调暗时保留动态背景" else "调暗时渐隐为纯黑",
-                onToggle = { playerVm.toggleScreensaverKeepBackground() },
-            )
-
-            SectionLabel("遥控器")
-            var remote by remember { mutableStateOf(playerVm.remoteOverride()) }
-            val remoteOrder = listOf(
-                com.applemusicktv.data.OnboardingPreferences.REMOTE_AUTO,
-                com.applemusicktv.data.OnboardingPreferences.REMOTE_FIRE,
-                com.applemusicktv.data.OnboardingPreferences.REMOTE_GOOGLE,
-            )
-            fun remoteLabel(v: String) = when (v) {
-                com.applemusicktv.data.OnboardingPreferences.REMOTE_FIRE -> "Fire TV"
-                com.applemusicktv.data.OnboardingPreferences.REMOTE_GOOGLE -> "Google TV"
-                else -> "自动"
-            }
-            fun stepRemote(dir: Int) {
-                val i = (remoteOrder.indexOf(remote).coerceAtLeast(0) + dir + remoteOrder.size) % remoteOrder.size
-                remote = remoteOrder[i]; playerVm.setRemoteOverride(remote)
-            }
-            Stepper(
-                label = "遥控器类型",
-                value = remoteLabel(remote),
-                sub = "Google TV 显示屏幕媒体和队列控制；Fire TV 使用 Menu 键",
-                onDec = { stepRemote(-1) },
-                onInc = { stepRemote(1) },
-            )
-
-            // ── A/V SYNC ──────────────────────────────────────────────────
-            // One delay drives both the beat visuals and the lyric clock. A ~200 ms display baseline is
-            // built in (so this normally reads 0); Automatic adds a Bluetooth estimate on top when a BT
-            // output is live. "Extra" is your own nudge on top of all that.
-            SectionLabel("音画同步")
-            Text(
-                "输出：${pstate.avOutputLabel}",
-                fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Medium,
-            )
-            Text(
-                if (pstate.avSyncAuto && pstate.avOnBluetooth) "已应用蓝牙延迟：+350 ms（估算）"
-                else "标准时序",
-                fontSize = 10.sp, color = Color(0xFF999999), modifier = Modifier.padding(bottom = 4.dp),
-            )
-            Toggle(
-                label = "自动",
-                on = pstate.avSyncAuto,
-                sub = if (pstate.avSyncAuto) "自动附加蓝牙延迟估算"
-                      else "手动 — 仅在基线上附加下方的额外偏移",
-                onToggle = { playerVm.setAvSyncAuto(!pstate.avSyncAuto) },
-            )
-            Stepper(
-                label = "额外偏移", value = "${state.lyricsOffsetMs}ms",
-                sub = "作用于歌词、节拍和 MV 对口型。负值 = 提前，正值 = 延后",
-                onDec = { vm.setLyricsOffset(state.lyricsOffsetMs - 50) },
-                onInc = { vm.setLyricsOffset(state.lyricsOffsetMs + 50) },
-            )
-
-            Spacer(Modifier.height(6.dp))
-            // ── Reveal dev menu ───────────────────────────────────────────
-            ActionBtn(if (showDev) "▾ 收起开发者菜单" else "▸ 打开开发者菜单", Color(0xFF1C1C1E)) { showDev = !showDev }
-
-            if (showDev) {
-                SectionLabel("账号")
-                StatusChip("Bearer 令牌", state.hasBearer, if (!state.hasBearer) "刷新后抓取" else "正常")
-                StatusChip("Music-User-Token", state.hasMUT, state.mutSetAt?.let { "设置于 $it" } ?: if (!state.hasMUT) "通过手机网页服务器设置" else "正常")
-                StatusChip("服务器", state.serverOk, if (state.serverOk) "可连接" else "无法连接 — 独立模式")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ActionBtn("重新检测服务器", Color(0xFF1A2A1A), small = true) { vm.recheckServer(playerVm, onDone = onDataRefresh) }
-                    ActionBtn("刷新", Color(0xFF2A2A2A), small = true) { vm.refresh(onDone = onDataRefresh) }
-                    ActionBtn("重新运行设置", Color(0xFF2A2A1A), small = true) { playerVm.resetOnboarding() }
-                    ActionBtn("清除令牌", Color(0xFF3A1A1A), small = true) { vm.clearMUT() }
-                    // Hard quit: stop playback + kill the process so the next launch is a true cold start.
-                    ActionBtn("强制退出", Color(0xFF3A1A1A), small = true) {
-                        playerVm.stopPlayback()
-                        android.os.Process.killProcess(android.os.Process.myPid())
-                    }
-                }
-
-                SectionLabel("连接")
-                if (state.webServerUrl.isNotEmpty()) {
-                    Column(
-                        Modifier.fillMaxWidth().background(Color(0xFF0D1F0D), RoundedCornerShape(10.dp)).padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Text("手机网页服务器", fontSize = 9.sp, color = Color(0xFF6BCB77), fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
-                        Text(state.webServerUrl, fontSize = 15.sp, color = Color.White, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.SemiBold)
-                        Text("在手机上打开 → 粘贴 Music-User-Token", fontSize = 11.sp, color = Color(0xFF557755))
-                    }
-                }
+                // ── 音源管理（ZL 核心功能）────────────────────────────
+                SectionLabel("音源管理")
                 Column(
                     Modifier.fillMaxWidth().background(Color(0xFF1A1A1A), RoundedCornerShape(10.dp)).padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("电脑服务器", fontSize = 9.sp, color = Color(0xFF888888), fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (pcIpEditing) {
-                            // Editing: OK opened this, so the field may hold focus + IME. Done/Back closes.
-                            LaunchedEffect(Unit) { runCatching { pcIpFocus.requestFocus() } }
-                            androidx.activity.compose.BackHandler(enabled = true) { pcIpEditing = false; hideIme() }
-                            Box(
-                                Modifier.weight(1f).background(Color(0xFF0D0D0D), RoundedCornerShape(6.dp)).padding(horizontal = 10.dp, vertical = 8.dp),
-                            ) {
-                                BasicTextField(
-                                    value = pcIpDraft, onValueChange = { pcIpDraft = it }, singleLine = true,
-                                    textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace),
-                                    cursorBrush = SolidColor(Color(0xFFFA233B)),
-                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                    keyboardActions = KeyboardActions(onDone = { vm.setPcServerIp(pcIpDraft); pcIpEditing = false; hideIme() }),
-                                    modifier = Modifier.fillMaxWidth().focusRequester(pcIpFocus),
-                                    decorationBox = { inner ->
-                                        if (pcIpDraft.isEmpty()) Text("192.168.x.x", fontSize = 13.sp, color = Color(0xFF444444), fontFamily = FontFamily.Monospace)
-                                        inner()
-                                    },
-                                )
-                            }
-                            ActionBtn("完成", Color(0xFF2A2A2A), small = true) { vm.setPcServerIp(pcIpDraft); pcIpEditing = false; hideIme() }
-                        } else {
-                            // Idle: a plain button. Focus can land here with no IME. OK opens the editor.
-                            Surface(
-                                onClick = { pcIpEditing = true },
-                                shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(6.dp)),
-                                colors = ClickableSurfaceDefaults.colors(containerColor = Color(0xFF0D0D0D), focusedContainerColor = Color(0xFF1E1E1E)),
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(
-                                    pcIpDraft.ifEmpty { "192.168.x.x — 按确定键编辑" },
-                                    fontSize = 13.sp, color = if (pcIpDraft.isEmpty()) Color(0xFF666666) else Color.White,
-                                    fontFamily = FontFamily.Monospace,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
-                                )
-                            }
-                        }
-                        if (pcIpDraft.isNotEmpty()) ActionBtn("清除", Color(0xFF3A1A1A), small = true) { pcIpDraft = ""; vm.setPcServerIp("") }
+                    Text("搜索与播放使用导入的自定义音源（洛雪 userApi 脚本）", fontSize = 11.sp, color = Color(0xFF777777))
+                    ActionBtn(
+                        if (state.lxEnabled) "自定义音源：已启用（按 OK 关闭）" else "自定义音源：已关闭（按 OK 启用）",
+                        if (state.lxEnabled) Color(0xFF1A2A1A) else Color(0xFF2A2A2A),
+                    ) { vm.setLxEnabled(!state.lxEnabled) }
+
+                    ActionBtn("扫码导入音源（手机打开网页粘贴链接）", Color(0xFF2A2A2A)) { showQr = true }
+
+                    Text("已导入音源（${state.lxScripts.size}）", fontSize = 9.sp, color = Color(0xFF888888), fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+                    if (state.lxScripts.isEmpty()) {
+                        Text("还没有导入音源。不导入也可用酷我内置搜索，但取链成功率较低，建议扫码导入一个。", fontSize = 11.sp, color = Color(0xFFAA7744))
                     }
-                    if (state.pcServerIp.isNotEmpty())
-                        Text("当前使用：${state.pcServerIp}:3000", fontSize = 10.sp, color = Color(0xFF6BCB77), fontFamily = FontFamily.Monospace)
+                    state.lxScripts.forEach { script ->
+                        Row(
+                            Modifier.fillMaxWidth().background(Color(0xFF0D0D0D), RoundedCornerShape(6.dp)).padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(script.name, fontSize = 13.sp, color = if (script.enabled) Color.White else Color(0xFF666666), modifier = Modifier.weight(1f))
+                            ActionBtn(if (script.enabled) "停用" else "启用", Color(0xFF2A2A2A), small = true) { vm.toggleLxScript(script.id, !script.enabled) }
+                            ActionBtn("删除", Color(0xFF2A1A1A), small = true) { vm.removeLxScript(script.id) }
+                        }
+                    }
                 }
 
-                // ── 自定义音源（LX 引擎）────────────────────────────────
-                SectionLabel("自定义音源")
+                // ── 关于 ────────────────────────────────────────────
+                SectionLabel("关于")
                 Column(
                     Modifier.fillMaxWidth().background(Color(0xFF1A1A1A), RoundedCornerShape(10.dp)).padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text("搜索与播放走 LX 引擎（酷我 + 导入的音源脚本，洛雪 userApi 格式）", fontSize = 11.sp, color = Color(0xFF777777))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        ActionBtn(
-                            if (state.lxEnabled) "已启用 · 点击关闭" else "已关闭 · 点击启用",
-                            if (state.lxEnabled) Color(0xFF1A2A1A) else Color(0xFF2A2A2A),
-                            small = true,
-                        ) { vm.setLxEnabled(!state.lxEnabled) }
-                    }
-                    if (state.lxEnabled) {
-                        Text("已导入音源（${state.lxScripts.size}）", fontSize = 9.sp, color = Color(0xFF888888), fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
-                        if (state.lxScripts.isEmpty()) {
-                            Text("还没有导入音源——没有脚本时仅酷我内置搜索可用，取链可能失败；建议先导入一个音源脚本", fontSize = 11.sp, color = Color(0xFFAA7744))
-                        }
-                        state.lxScripts.forEach { script ->
-                            Row(
-                                Modifier.fillMaxWidth().background(Color(0xFF0D0D0D), RoundedCornerShape(6.dp)).padding(horizontal = 10.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(script.name, fontSize = 13.sp, color = if (script.enabled) Color.White else Color(0xFF666666), modifier = Modifier.weight(1f))
-                                ActionBtn(if (script.enabled) "停用" else "启用", Color(0xFF2A2A2A), small = true) { vm.toggleLxScript(script.id, !script.enabled) }
-                                ActionBtn("删除", Color(0xFF2A1A1A), small = true) { vm.removeLxScript(script.id) }
-                            }
-                        }
-                        // 导入（URL）
-                        if (lxImportEditing) {
-                            LaunchedEffect(Unit) { runCatching { lxImportFocus.requestFocus() } }
-                            androidx.activity.compose.BackHandler(enabled = true) { lxImportEditing = false; hideIme() }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    Modifier.weight(1f).background(Color(0xFF0D0D0D), RoundedCornerShape(6.dp)).padding(horizontal = 10.dp, vertical = 8.dp),
-                                ) {
-                                    BasicTextField(
-                                        value = lxImportDraft, onValueChange = { lxImportDraft = it }, singleLine = true,
-                                        textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace),
-                                        cursorBrush = SolidColor(Color(0xFFFA233B)),
-                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                        keyboardActions = KeyboardActions(onDone = { if (lxImportDraft.isNotBlank()) vm.importLxUrl(lxImportDraft); lxImportEditing = false; hideIme() }),
-                                        modifier = Modifier.fillMaxWidth().focusRequester(lxImportFocus),
-                                        decorationBox = { inner ->
-                                            if (lxImportDraft.isEmpty()) Text("https://…/latest.js", fontSize = 13.sp, color = Color(0xFF444444), fontFamily = FontFamily.Monospace)
-                                            inner()
-                                        },
-                                    )
-                                }
-                                ActionBtn("导入", Color(0xFF1A2A1A), small = true) { if (lxImportDraft.isNotBlank()) vm.importLxUrl(lxImportDraft); lxImportEditing = false; hideIme() }
-                            }
-                        } else {
-                            ActionBtn("从 URL 导入音源脚本", Color(0xFF2A2A2A), small = true) { lxImportEditing = true }
-                        }
-                    }
+                    Text("ZL Music（Apple Music TV 风格 · 自定义音源版）", fontSize = 13.sp, color = Color.White)
+                    Text(com.applemusicktv.BuildConfig.VERSION_NAME, fontSize = 11.sp, color = Color(0xFF777777))
                 }
 
-                // ── LOGS (app + network) ──────────────────────────────────
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SectionLabel("日志")
-                    ActionBtn("清除", Color(0xFF2A2A2A), small = true) { vm.clearLogs() }
-                }
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().height(300.dp)
-                        .background(Color(0xFF0D0D0D), RoundedCornerShape(8.dp)).padding(12.dp),
-                    reverseLayout = true,
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
-                    items(netLogs.reversed()) { line ->
-                        Text(line, fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF6C8CD5), lineHeight = 13.sp)
-                    }
-                    items(state.logs.reversed()) { log ->
-                        Text(log.message, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
-                            color = when (log.level) {
-                                "ERROR" -> Color(0xFFFF6B6B); "WARN" -> Color(0xFFFFD93D)
-                                "OK"    -> Color(0xFF6BCB77); else  -> Color(0xFFAAAAAA)
-                            }, lineHeight = 13.sp)
-                    }
-                }
-
-                SectionLabel("问题反馈")
-                BugReportRow(state.webServerUrl)
-
-                SectionLabel("危险区域")
-                ActionBtn("重置应用", Color(0xFF4A1414)) { confirmReset = true }
-                Text("清除令牌、置顶和所有设置，然后重启。", fontSize = 10.sp, color = Color(0xFF775555))
-                Spacer(Modifier.height(20.dp))
-            }
-        }
-    }
-
-    if (confirmReset) {
-        Box(Modifier.fillMaxSize().background(Color(0xCC000000)), contentAlignment = Alignment.Center) {
-            Column(
-                Modifier.width(360.dp).background(Color(0xFF1C1C1E), RoundedCornerShape(14.dp)).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("重置应用？", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text("这将清除你的令牌、置顶和所有设置，然后关闭应用。", fontSize = 12.sp, color = Color(0xFF999999))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ActionBtn("取消", Color(0xFF2A2A2A)) { confirmReset = false }
-                    ActionBtn("重置", Color(0xFFB22222)) {
-                        val am = ctx.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-                        am.clearApplicationUserData()
-                    }
-                }
-            }
-        }
+    if (showQr && state.webServerUrl.isNotEmpty()) {
+        com.applemusicktv.ui.components.QrImportOverlay(
+            url = state.webServerUrl,
+            hint = "手机与电视连同一 WiFi → 扫码打开导入页 → 粘贴音源脚本链接或上传文件",
+            onClose = { showQr = false },
+        )
     }
 }
 

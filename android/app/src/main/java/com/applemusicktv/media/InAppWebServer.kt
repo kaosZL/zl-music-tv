@@ -378,7 +378,16 @@ class InAppWebServer @Inject constructor(
         }
     }
 
-    private fun status() = """{"hasMUT":${prefs.hasMUT()},"mutLen":${prefs.getMUT().length},"url":"${serverUrl()}","hasCrash":${com.applemusicktv.util.CrashReporter.lastCrash(context) != null}}"""
+    private fun status(): String {
+        val lxScripts = org.json.JSONArray().apply {
+            lxPrefs.loadScripts().forEach {
+                put(org.json.JSONObject().apply {
+                    put("id", it.id); put("name", it.name); put("enabled", it.enabled)
+                })
+            }
+        }
+        return """{"hasMUT":${prefs.hasMUT()},"mutLen":${prefs.getMUT().length},"url":"${serverUrl()}","hasCrash":${com.applemusicktv.util.CrashReporter.lastCrash(context) != null},"lxScripts":${lxScripts}}"""
+    }
     private fun logsJson() = "[${getLogs().joinToString(",") { "\"${it.replace("\"","'")}\"" }}]"
     private fun netLogsJson() = "[${NetworkLog.getAll().joinToString(",") { "\"${it.replace("\"","'")}\"" }}]"
 
@@ -478,12 +487,36 @@ function legacyCopy(text,done,b){
 </div>
 
 <div class=card>
-<h2>设置令牌</h2>
+<h2>导入音源脚本</h2>
+<form method=POST action=/import-lx-url>
+<input name=lxurl placeholder="粘贴音源脚本链接（https://…/latest.js）">
+<button class="btn btn-p" type=submit>从链接导入</button>
+</form>
+<form method=POST action=/import-lx-code>
+<textarea name=lxcode placeholder="或直接粘贴完整脚本内容"></textarea>
+<button class="btn btn-p" type=submit>从内容导入</button>
+</form>
+<div id=lxlist></div>
+<script>
+fetch('/status').then(r=>r.json()).then(s=>{
+  const box=document.getElementById('lxlist');
+  if(!s.lxScripts||!s.lxScripts.length){box.innerHTML='<div class=sub2>还没有导入音源</div>';return}
+  box.innerHTML='<h2>已导入音源</h2>'+s.lxScripts.map(function(x){
+    return '<div class=row><div class=label>'+x.name+'</div><div>'+(x.enabled?'已启用':'已停用')+'</div></div>'
+      +'<div class=row><form method=POST action=/lx-toggle-script><input type=hidden name=lxid value='+x.id+'><input type=hidden name=on value='+(x.enabled?0:1)+'><button class=btn btn-s type=submit>'+(x.enabled?'停用':'启用')+'</button></form>'
+      +'<form method=POST action=/lx-remove-script><input type=hidden name=lxid value='+x.id+'><button class=btn btn-s type=submit>删除</button></form></div>';
+  }).join('');
+}).catch(()=>{});
+</script>
+</div>
+
+<div class=card>
+<h2>设置令牌（Apple 模式备用）</h2>
 <form method=POST action=/set-token>
 <textarea name=mut placeholder="eyJra… 在此粘贴你的 Music-User-Token"></textarea>
 <button class="btn btn-p" type=submit>保存令牌</button>
 </form>
-${if(has)"<form method=POST action=/clear-token><button class='btn btn-s' type=submit>清除令牌</button></form>" else ""}
+${if(has)"<form method=POST action=/clear-token><button class=btn btn-s type=submit>清除令牌</button></form>" else ""}
 </div>
 
 <div class=card>
