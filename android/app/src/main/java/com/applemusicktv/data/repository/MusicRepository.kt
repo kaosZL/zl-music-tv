@@ -284,7 +284,7 @@ class MusicRepository @Inject constructor(
             ?: throw IllegalStateException("无法解析自定义音源歌曲 id")
         for (quality in listOf("320k", "128k", "flac")) {
             val raw = lxEngine.musicUrl(infoJson, quality)
-            val url = raw.trim().removeSurrounding(""")
+            val url = raw.trim().removeSurrounding("\"")
             if (!raw.contains("__err") && url.startsWith("http")) return url
         }
         throw IllegalStateException("自定义音源取链失败（320k/128k/flac 均不可用）")
