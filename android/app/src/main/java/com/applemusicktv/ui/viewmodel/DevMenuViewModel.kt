@@ -28,6 +28,8 @@ data class DevMenuState(
     val hasMUT:         Boolean        = false,
     val mutSetAt:       String?        = null,
     val webServerUrl:   String         = "",
+    val lxEnabled:      Boolean        = false,
+    val lxScripts:      List<com.applemusicktv.data.lx.LxScript> = emptyList(),
     val pcServerIp:     String         = "",
     val standaloneMode: Boolean        = false,
     val standaloneOn:   Boolean        = false,
@@ -47,6 +49,9 @@ class DevMenuViewModel @Inject constructor(
     private val crossfadePrefs: CrossfadePreferences,
     private val standalonePrefs: StandalonePreferences,
     private val beatAnalyzer: BeatAnalyzer,
+    private val lxPrefs: com.applemusicktv.data.lx.LxPreferences,
+    private val lxScriptStore: com.applemusicktv.data.lx.LxScriptStore,
+    private val lxEngine: com.applemusicktv.data.lx.LxEngine,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DevMenuState(
@@ -56,6 +61,8 @@ class DevMenuViewModel @Inject constructor(
         crossfadeMs    = crossfadePrefs.getDuration(),
         beatLatencyMs  = beatAnalyzer.latencyMs,
         standaloneOn   = standalonePrefs.isEnabled(),
+        lxEnabled      = lxPrefs.isEnabled,
+        lxScripts      = lxPrefs.loadScripts(),
     ))
     val state: StateFlow<DevMenuState> = _state
 
@@ -90,6 +97,40 @@ class DevMenuViewModel @Inject constructor(
         serverPrefs.setPcServerIp(ip)
         _state.update { it.copy(pcServerIp = ip) }
         log("INFO", if (ip.isEmpty()) "PC server cleared — using default" else "PC server set to $ip → ${serverPrefs.effectiveBaseUrl()}")
+    }
+
+    // ── 自定义音源（LX 引擎）──
+    fun setLxEnabled(on: Boolean) {
+        lxPrefs.setEnabled(on)
+        // LX 依赖内置服务器做取流路由：开启时确保服务器在跑
+        if (on) webServer.setEnabled(true)
+        _state.update { it.copy(lxEnabled = on, webServerUrl = webServer.serverUrl()) }
+        log("INFO", if (on) "自定义音源已启用：搜索走 LX 引擎（酷我 + 音源脚本）" else "自定义音源已关闭")
+    }
+
+    fun importLxUrl(url: String) = viewModelScope.launch {
+        log("INFO", "正在下载音源脚本…")
+        lxScriptStore.importFromUrl(url)
+            .onSuccess { script ->
+                lxEngine.reload()
+                _state.update { it.copy(lxScripts = lxPrefs.loadScripts()) }
+                log("OK", "音源已导入：${script.name}")
+            }
+            .onFailure { log("ERROR", "导入失败：${'$'}{it.message}") }
+    }
+
+    fun toggleLxScript(id: String, on: Boolean) = viewModelScope.launch {
+        lxPrefs.setEnabled(id, on)
+        lxEngine.reload()
+        _state.update { it.copy(lxScripts = lxPrefs.loadScripts()) }
+        log("OK", "音源已${if (on) "启用" else "停用"}")
+    }
+
+    fun removeLxScript(id: String) = viewModelScope.launch {
+        lxScriptStore.delete(id)
+        lxEngine.reload()
+        _state.update { it.copy(lxScripts = lxPrefs.loadScripts()) }
+        log("OK", "音源已删除")
     }
 
     fun setMUT(token: String) = viewModelScope.launch {

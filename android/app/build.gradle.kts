@@ -29,8 +29,8 @@ android {
         applicationId = "com.applemusicktv"
         minSdk = 23
         targetSdk = 35
-        versionCode = 101
-        versionName = "0.2.0-zl"
+        versionCode = 102
+        versionName = "0.3.0-zl"
         // Set your proxy server IP here
         // Proxy server URL. Set `proxyBaseUrl` in local.properties (gitignored)
         // to your machine's LAN IP, e.g. http://192.168.1.50:3000/. Falls back
@@ -79,6 +79,8 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // Media3
+    // LX 引擎：QuickJS 跑 lx userApi 脚本与酷我 SDK（设备端自定义音源）
+    implementation("io.github.dokar3:quickjs-kt:1.0.0-alpha13")
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
     implementation("androidx.media3:media3-session:1.4.1")

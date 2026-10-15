@@ -36,6 +36,8 @@ data class SearchResults(
 
 @Singleton
 class MusicRepository @Inject constructor(
+    private val lxEngine: com.applemusicktv.data.lx.LxEngine,
+    private val lxPrefs: com.applemusicktv.data.lx.LxPreferences,
     private val api: ProxyApi,
     private val mutPrefs: MutPreferences,
     private val serverPrefs: ServerPreferences,
@@ -62,6 +64,11 @@ class MusicRepository @Inject constructor(
 
     // ── Catalog ───────────────────────────────────────────────────────────
     suspend fun search(term: String, limit: Int = 20): Result<SearchResults> {
+        // 自定义音源（lx 引擎）：搜索优先走酷我 + userApi 脚本体系
+        if (lxPrefs.isEnabled) {
+            val songs = com.applemusicktv.data.lx.LxMapper.parseSongs(lxEngine.search(term, 1, limit))
+            if (songs.isNotEmpty()) return Result.success(SearchResults(songs = songs))
+        }
         if (!useProxy) {
             return direct.search(term, limit).map { r ->
                 SearchResults(songs = r.songs.map(::songFromDto), albums = r.albums.map(::albumFromDto), artists = r.artists.map(::artistFromDto),
@@ -203,7 +210,16 @@ class MusicRepository @Inject constructor(
 
     // ── Lyrics ────────────────────────────────────────────────────────────
     suspend fun getLyrics(songId: String, title: String = "", artist: String = "", durationSec: Long = 0) =
-        if (!useProxy) runCatching {
+        if (com.applemusicktv.data.lx.LxMapper.isLxId(songId)) {
+            runCatching {
+                val root = org.json.JSONObject(lxEngine.lyric(com.applemusicktv.data.lx.LxMapper.decodeSongId(songId)?.optString("i") ?: ""))
+                val arr = root.optJSONArray("lines") ?: org.json.JSONArray()
+                (0 until arr.length()).map { i ->
+                    val line = arr.getJSONObject(i)
+                    com.applemusicktv.data.network.LyricLine(startMs = line.optLong("time", 0L), endMs = 0L, text = line.optString("text"))
+                }
+            }
+        } else if (!useProxy) runCatching {
             directLyrics.getLyrics(songId, direct.storefront, title, artist, durationSec)
         } else runCatching { api.getLyrics(songId).lines }
 
@@ -250,7 +266,29 @@ class MusicRepository @Inject constructor(
 
     // ── Full song stream URL ───────────────────────────────────────────────
     fun streamUrl(songId: String): String =
-        "${serverPrefs.effectiveBaseUrl()}api/stream/$songId"
+        // 自定义音源歌曲：走 app 内置服务器解析（InAppWebServer /zlstream → 302 直链）。
+        // 端口与 InAppWebServer.port 一致；不走依赖注入避免构造环
+        if (com.applemusicktv.data.lx.LxMapper.isLxId(songId)) {
+            "http://127.0.0.1:8080/zlstream/$songId"
+        } else {
+            "${serverPrefs.effectiveBaseUrl()}api/stream/$songId"
+        }
+
+    /**
+     * 播放器实际使用的地址：普通歌走代理流；zl1. 复合 id（自定义音源）经 LX 引擎
+     * userApi 脚本解析出直链。取链失败抛错由调用方跳过/提示。
+     */
+    suspend fun playableUrl(songId: String): String {
+        if (!com.applemusicktv.data.lx.LxMapper.isLxId(songId)) return streamUrl(songId)
+        val infoJson = com.applemusicktv.data.lx.LxMapper.musicInfoJson(songId)
+            ?: throw IllegalStateException("无法解析自定义音源歌曲 id")
+        for (quality in listOf("320k", "128k", "flac")) {
+            val raw = lxEngine.musicUrl(infoJson, quality)
+            val url = raw.trim().removeSurrounding(""")
+            if (!raw.contains("__err") && url.startsWith("http")) return url
+        }
+        throw IllegalStateException("自定义音源取链失败（320k/128k/flac 均不可用）")
+    }
 
     fun prefetchUrl(songId: String): String =
         "${serverPrefs.effectiveBaseUrl()}api/stream/prefetch/$songId"

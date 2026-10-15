@@ -51,6 +51,9 @@ fun DevMenuScreen(
     // Fire TV IME by itself the moment D-pad focus lands on it.
     var pcIpEditing by remember { mutableStateOf(false) }
     val pcIpFocus = remember { FocusRequester() }
+    var lxImportEditing by remember { mutableStateOf(false) }
+    var lxImportDraft by remember { mutableStateOf("") }
+    val lxImportFocus = remember { FocusRequester() }
     val ctx = LocalContext.current
     val rootView = androidx.compose.ui.platform.LocalView.current
     fun hideIme() = runCatching {
@@ -303,6 +306,64 @@ fun DevMenuScreen(
                     }
                     if (state.pcServerIp.isNotEmpty())
                         Text("当前使用：${state.pcServerIp}:3000", fontSize = 10.sp, color = Color(0xFF6BCB77), fontFamily = FontFamily.Monospace)
+                }
+
+                // ── 自定义音源（LX 引擎）────────────────────────────────
+                SectionLabel("自定义音源")
+                Column(
+                    Modifier.fillMaxWidth().background(Color(0xFF1A1A1A), RoundedCornerShape(10.dp)).padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text("搜索与播放走 LX 引擎（酷我 + 导入的音源脚本，洛雪 userApi 格式）", fontSize = 11.sp, color = Color(0xFF777777))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        ActionBtn(
+                            if (state.lxEnabled) "已启用 · 点击关闭" else "已关闭 · 点击启用",
+                            if (state.lxEnabled) Color(0xFF1A2A1A) else Color(0xFF2A2A2A),
+                            small = true,
+                        ) { vm.setLxEnabled(!state.lxEnabled) }
+                    }
+                    if (state.lxEnabled) {
+                        Text("已导入音源（${state.lxScripts.size}）", fontSize = 9.sp, color = Color(0xFF888888), fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+                        if (state.lxScripts.isEmpty()) {
+                            Text("还没有导入音源——没有脚本时仅酷我内置搜索可用，取链可能失败；建议先导入一个音源脚本", fontSize = 11.sp, color = Color(0xFFAA7744))
+                        }
+                        state.lxScripts.forEach { script ->
+                            Row(
+                                Modifier.fillMaxWidth().background(Color(0xFF0D0D0D), RoundedCornerShape(6.dp)).padding(horizontal = 10.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(script.name, fontSize = 13.sp, color = if (script.enabled) Color.White else Color(0xFF666666), modifier = Modifier.weight(1f))
+                                ActionBtn(if (script.enabled) "停用" else "启用", Color(0xFF2A2A2A), small = true) { vm.toggleLxScript(script.id, !script.enabled) }
+                                ActionBtn("删除", Color(0xFF2A1A1A), small = true) { vm.removeLxScript(script.id) }
+                            }
+                        }
+                        // 导入（URL）
+                        if (lxImportEditing) {
+                            LaunchedEffect(Unit) { runCatching { lxImportFocus.requestFocus() } }
+                            androidx.activity.compose.BackHandler(enabled = true) { lxImportEditing = false; hideIme() }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    Modifier.weight(1f).background(Color(0xFF0D0D0D), RoundedCornerShape(6.dp)).padding(horizontal = 10.dp, vertical = 8.dp),
+                                ) {
+                                    BasicTextField(
+                                        value = lxImportDraft, onValueChange = { lxImportDraft = it }, singleLine = true,
+                                        textStyle = TextStyle(color = Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace),
+                                        cursorBrush = SolidColor(Color(0xFFFA233B)),
+                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                        keyboardActions = KeyboardActions(onDone = { if (lxImportDraft.isNotBlank()) vm.importLxUrl(lxImportDraft); lxImportEditing = false; hideIme() }),
+                                        modifier = Modifier.fillMaxWidth().focusRequester(lxImportFocus),
+                                        decorationBox = { inner ->
+                                            if (lxImportDraft.isEmpty()) Text("https://…/latest.js", fontSize = 13.sp, color = Color(0xFF444444), fontFamily = FontFamily.Monospace)
+                                            inner()
+                                        },
+                                    )
+                                }
+                                ActionBtn("导入", Color(0xFF1A2A1A), small = true) { if (lxImportDraft.isNotBlank()) vm.importLxUrl(lxImportDraft); lxImportEditing = false; hideIme() }
+                            }
+                        } else {
+                            ActionBtn("从 URL 导入音源脚本", Color(0xFF2A2A2A), small = true) { lxImportEditing = true }
+                        }
+                    }
                 }
 
                 // ── LOGS (app + network) ──────────────────────────────────

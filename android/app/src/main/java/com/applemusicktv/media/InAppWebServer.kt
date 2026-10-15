@@ -25,6 +25,9 @@ class InAppWebServer @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: MutPreferences,
     private val repo: MusicRepository,
+    private val lxEngine: com.applemusicktv.data.lx.LxEngine,
+    private val lxScriptStore: com.applemusicktv.data.lx.LxScriptStore,
+    private val lxPrefs: com.applemusicktv.data.lx.LxPreferences,
     private val lyricsOffsetPrefs: LyricsOffsetPreferences,
     private val crossfadePrefs: CrossfadePreferences,
     private val standalonePrefs: StandalonePreferences,
@@ -51,7 +54,8 @@ class InAppWebServer @Inject constructor(
     /** Called once at app start: remember the scope and start only if enabled. */
     fun boot(scope: CoroutineScope) {
         appScope = scope
-        if (isEnabled) start(scope)
+        // 自定义音源启用时必须起服务器：播放器的 zl1. 歌曲经 /zlstream 路由解析直链
+        if (isEnabled || lxPrefs.isEnabled) start(scope)
     }
 
     /** Toggle from Settings — starts or stops the phone web server and persists the choice. */
@@ -186,6 +190,13 @@ class InAppWebServer @Inject constructor(
             method == "POST" && path == "/set-server-ip"       -> { applyServerIp(parseField(body, "serverip")); redirect(out, "/") }
                 method == "POST" && path == "/set-volume-leveling" -> { applyVolumeLeveling(parseField(body, "vol")); redirect(out, "/") }
                 method == "POST" && path == "/set-background-play" -> { applyBackgroundPlay(parseField(body, "bg")); redirect(out, "/") }
+
+                // ── 自定义音源（LX 引擎）──
+                method == "GET" && path.startsWith("/zlstream/") -> handleZlStream(out, path.removePrefix("/zlstream/"))
+                method == "POST" && path == "/import-lx-url"   -> { applyImportLxUrl(parseField(body, "lxurl")); redirect(out, "/") }
+                method == "POST" && path == "/import-lx-code"  -> { applyImportLxCode(parseField(body, "lxcode")); redirect(out, "/") }
+                method == "POST" && path == "/lx-toggle-script" -> { applyLxToggleScript(parseField(body, "lxid"), parseField(body, "on") == "1"); redirect(out, "/") }
+                method == "POST" && path == "/lx-remove-script" -> { applyLxRemoveScript(parseField(body, "lxid")); redirect(out, "/") }
                 else -> send(out, 404, "text/plain", "Not found")
             }
             out.flush(); socket.close()
@@ -285,6 +296,51 @@ class InAppWebServer @Inject constructor(
         try { while (!socket.isClosed) Thread.sleep(1000) } catch (_: Exception) {}
         sseClients.remove(out)
         try { socket.close() } catch (_: Exception) {}
+    }
+
+    /**
+     * zl1. 复合 id 的取流路由：LX 引擎（userApi 脚本）解析出 CDN 直链后 302。
+     * 每个连接一个协程（IO），runBlocking 等引擎可接受；15s 超时防止脚本卡死挂住播放器。
+     */
+    private fun handleZlStream(out: BufferedOutputStream, songId: String) {
+        val url = kotlinx.coroutines.runBlocking {
+            kotlinx.coroutines.withTimeoutOrNull(15_000) { repo.playableUrl(songId) }
+        }
+        if (url == null || !url.startsWith("http")) {
+            addLog("ERROR", "zlstream 解析失败: ${songId.take(24)}…")
+            send(out, 404, "text/plain", "resolve failed")
+        } else {
+            send(out, 302, "text/plain", "", "Location: $url\r\n")
+        }
+    }
+
+    private fun applyImportLxUrl(raw: String) {
+        val url = raw.trim()
+        if (url.isEmpty()) { addLog("WARN", "音源 URL 为空"); return }
+        kotlinx.coroutines.runBlocking {
+            lxScriptStore.importFromUrl(url)
+                .onSuccess { addLog("OK", "音源已导入：${it.name}（重启或切页后生效）") }
+                .onFailure { addLog("ERROR", "导入失败：${it.message}") }
+        }
+    }
+
+    private fun applyImportLxCode(raw: String) {
+        if (raw.isBlank()) { addLog("WARN", "脚本内容为空"); return }
+        kotlinx.coroutines.runBlocking {
+            lxScriptStore.importFromText(raw.trim())
+                .onSuccess { addLog("OK", "音源已导入：${it.name}（重启或切页后生效）") }
+                .onFailure { addLog("ERROR", "导入失败：${it.message}") }
+        }
+    }
+
+    private fun applyLxToggleScript(id: String, on: Boolean) {
+        lxPrefs.setEnabled(id, on)
+        addLog("OK", "音源已${if (on) "启用" else "停用"}（切换歌曲源后生效）")
+    }
+
+    private fun applyLxRemoveScript(id: String) {
+        lxScriptStore.delete(id)
+        addLog("OK", "音源已删除")
     }
 
     private fun send(out: BufferedOutputStream, code: Int, type: String, body: String, extra: String = "") {
