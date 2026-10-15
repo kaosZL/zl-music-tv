@@ -98,7 +98,6 @@ fun DevMenuScreen(
                 Spacer(Modifier.height(20.dp))
             }
         }
-    }
 
     if (showQr && state.webServerUrl.isNotEmpty()) {
         com.applemusicktv.ui.components.QrImportOverlay(
