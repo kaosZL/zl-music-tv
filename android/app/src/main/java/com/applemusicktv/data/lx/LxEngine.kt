@@ -46,9 +46,9 @@ class LxEngine @Inject constructor(
             try {
                 bindBridges(js)
                 withContext(Dispatchers.IO) {
-                    js.evaluate(AssetLoader.load(context, "lx-engine/env.js"))
-                    js.evaluate(AssetLoader.load(context, "lx-engine/kwsdk.js"))
-                    js.evaluate(AssetLoader.load(context, "lx-engine/engine.js"))
+                    js.evaluate<Unit>(AssetLoader.load(context, "lx-engine/env.js"))
+                    js.evaluate<Unit>(AssetLoader.load(context, "lx-engine/kwsdk.js"))
+                    js.evaluate<Unit>(AssetLoader.load(context, "lx-engine/engine.js"))
                 }
                 scriptStore.enabledScripts().forEach { script ->
                     runCatching { jsEvaluate(js, script.code) }
@@ -86,9 +86,9 @@ class LxEngine @Inject constructor(
 
     suspend fun hasUserApi(): Boolean = call("zlEngine.hasUserApi()").trim() == "true"
 
-    /** 在引擎里执行任意 JS（加载脚本用） */
-    private fun jsEvaluate(js: QuickJs, code: String) {
-        js.evaluate(code)
+    /** 在引擎里执行任意 JS（加载脚本用）。evaluate 是 suspend，包一层跑在引擎锁内 */
+    private suspend fun jsEvaluate(js: QuickJs, code: String) {
+        js.evaluate<Unit>(code)
     }
 
     private suspend fun call(expr: String): String {
