@@ -113,20 +113,20 @@ class LxEngine @Inject constructor(
 
     private fun bindBridges(js: QuickJs) {
         // async：HTTP（字符串协议）
-        js.asyncFunction<String, String>("__zlHttp") { args ->
+        js.asyncFunction<String>("__zlHttp") { args ->
             val url = args.getOrNull(0) as? String ?: throw IllegalArgumentException("url")
             val reqJson = args.getOrNull(1) as? String ?: "{}"
             bridgeHttp(url, reqJson)
         }
         // 同步：MD5 / AES（kuwo 榜单签名用；契约与 RN 原生模块一致：base64 进出）
-        js.function<Any?, String>("__zlMd5") { args ->
+        js.function<String>("__zlMd5") { args ->
             md5Hex(args.getOrNull(0) as? String ?: "")
         }
-        js.function<Any?, String>("__zlAesEncrypt") { args ->
+        js.function<String>("__zlAesEncrypt") { args ->
             aes(args.getOrNull(0) as? String, args.getOrNull(1) as? String,
                 args.getOrNull(2) as? String, args.getOrNull(3) as? String, encrypt = true) ?: ""
         }
-        js.function<Any?, String>("__zlAesDecrypt") { args ->
+        js.function<String>("__zlAesDecrypt") { args ->
             aes(args.getOrNull(0) as? String, args.getOrNull(1) as? String,
                 args.getOrNull(2) as? String, args.getOrNull(3) as? String, encrypt = false) ?: ""
         }
