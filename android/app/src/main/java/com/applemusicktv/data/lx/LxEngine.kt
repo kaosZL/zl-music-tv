@@ -2,6 +2,8 @@ package com.applemusicktv.data.lx
 
 import android.content.Context
 import com.dokar.quickjs.QuickJs
+import com.dokar.quickjs.binding.asyncFunction
+import com.dokar.quickjs.binding.function
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -128,7 +130,6 @@ class LxEngine @Inject constructor(
             aes(args.getOrNull(0) as? String, args.getOrNull(1) as? String,
                 args.getOrNull(2) as? String, args.getOrNull(3) as? String, encrypt = false) ?: ""
         }
-        js.evaluate("console.log('LX engine bridges ready')")
     }
 
     private fun bridgeHttp(url: String, reqJson: String): String {
