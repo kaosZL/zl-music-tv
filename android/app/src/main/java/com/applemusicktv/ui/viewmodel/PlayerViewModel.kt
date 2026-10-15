@@ -1429,6 +1429,13 @@ class PlayerViewModel @Inject constructor(
     /** Editable library playlists for the "Add to Playlist" picker. */
     suspend fun editablePlaylists() = repo.getLibraryPlaylists(limit = 100).getOrDefault(emptyList())
 
+    /** ZL：新建本地歌单并把这首歌作为第一首（自动命名） */
+    fun createPlaylistAndAdd(song: com.applemusicktv.data.model.Song) = viewModelScope.launch {
+        runCatching { repo.createLocalPlaylistWith(song) }
+            .onSuccess { toast("已新建歌单《${it}》并加入《${song.title}》") }
+            .onFailure { toast("新建歌单失败") }
+    }
+
     fun addToPlaylist(playlistId: String, playlistName: String, song: com.applemusicktv.data.model.Song) = viewModelScope.launch {
         repo.addToPlaylist(playlistId, song)
             .onSuccess { toast("已添加到《$playlistName》") }

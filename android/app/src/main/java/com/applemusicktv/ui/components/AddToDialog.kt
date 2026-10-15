@@ -42,9 +42,10 @@ fun AddToDialog(playerVm: PlayerViewModel, song: Song, onDismiss: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2A)))
             Spacer(Modifier.height(4.dp))
-            // Library always first.
-            AddRow(Glyph.PLUS, "资料库", { playerVm.addToLibrary(song); onDismiss() },
+            // ZL：第一行收进「我的收藏」，第二行新建歌单并加入
+            AddRow(Glyph.PLUS, "我的收藏", { playerVm.addToLibrary(song); onDismiss() },
                 Modifier.focusRequester(firstFocus))
+            AddRow(Glyph.PLUS, "新建歌单并加入", { playerVm.createPlaylistAndAdd(song); onDismiss() })
             Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2A2A2A)).padding(vertical = 2.dp))
             val pls = playlists
             when {

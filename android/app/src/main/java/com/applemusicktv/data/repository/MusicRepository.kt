@@ -38,6 +38,7 @@ data class SearchResults(
 class MusicRepository @Inject constructor(
     private val lxEngine: com.applemusicktv.data.lx.LxEngine,
     private val lxPrefs: com.applemusicktv.data.lx.LxPreferences,
+    private val localPlaylists: com.applemusicktv.data.lx.LocalPlaylistStore,
     private val api: ProxyApi,
     private val mutPrefs: MutPreferences,
     private val serverPrefs: ServerPreferences,
@@ -318,28 +319,51 @@ class MusicRepository @Inject constructor(
         else apiCall { api.getLibraryAlbums(limit, offset).albums.map(::albumFromDto) }
 
     suspend fun getLibraryPlaylists(limit: Int = 25) =
-        if (!useProxy) direct.libraryPlaylists().map { it.playlists }
+        if (lxPrefs.isEnabled) Result.success(localPlaylists.lists())
+        else if (!useProxy) direct.libraryPlaylists().map { it.playlists }
         else apiCall { api.getLibraryPlaylists(limit).playlists }
 
     // ── Library writes ──────────────────────────────────────────────────
     /** Add a song (or album/video) to the user's library. A song's catalog id is what Apple wants;
      *  a library id (starts with "i.") is already in the library, so it's a no-op success. */
     suspend fun addToLibrary(song: Song): Result<Unit> {
+        // ZL：lx 模式下「加到资料库」= 收进我的收藏
+        if (lxPrefs.isEnabled) {
+            return runCatching {
+                localPlaylists.addTo(com.applemusicktv.data.lx.LocalPlaylistStore.FAV_ID, listOf(song))
+                Unit
+            }
+        }
         if (song.id.startsWith("i.")) return Result.success(Unit)   // already a library item
         val type = if (song.isMusicVideo) "music-videos" else "songs"
         return if (!useProxy) direct.addToLibrary(song.id, type)
         else runCatching { api.addToLibrary(mapOf("id" to song.id, "type" to type)); Unit }
     }
 
+    /** ZL：新建本地歌单并加入首歌 */
+    suspend fun createLocalPlaylistWith(song: Song): String {
+        val pl = localPlaylists.create()
+        localPlaylists.addTo(pl.id, listOf(song))
+        return pl.name
+    }
+
     /** Append a song to one of the user's editable library playlists. */
     suspend fun addToPlaylist(playlistId: String, song: Song): Result<Unit> {
+        if (playlistId.startsWith("zlpl:")) {
+            return runCatching {
+                val added = localPlaylists.addTo(playlistId, listOf(song))
+                check(added >= 0) { "歌单不存在" }
+                Unit
+            }
+        }
         val type = if (song.isMusicVideo) "music-videos" else "songs"
         return if (!useProxy) direct.addToPlaylist(playlistId, song.id, type)
         else runCatching { api.addTrackToPlaylist(playlistId, mapOf("id" to song.id, "type" to type)); Unit }
     }
 
     suspend fun getPlaylistTracks(id: String) =
-        if (!useProxy) direct.playlistTracks(id).map { it.songs.map(::songFromDto) }
+        if (id.startsWith("zlpl:")) Result.success(localPlaylists.songs(id))
+        else if (!useProxy) direct.playlistTracks(id).map { it.songs.map(::songFromDto) }
         else apiCall { api.getPlaylistTracks(id).songs.map(::songFromDto) }
 
     suspend fun getLibraryArtists(limit: Int = 25) =
