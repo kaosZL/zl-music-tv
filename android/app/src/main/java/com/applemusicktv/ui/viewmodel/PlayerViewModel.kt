@@ -1021,7 +1021,7 @@ class PlayerViewModel @Inject constructor(
             webServer.addLog("PLR", "restoreState idx=$idx posMs=$posMs song=${song.title} — deferred (paused)")
             pendingRestore = RestoreInfo(song, posMs, full)
             // Lyrics/motion are just display — safe (and nice) to warm now.
-            if (full) loadLyrics(song.id)
+            if (full || song.id.startsWith("zl1.")) loadLyrics(song.id)
             loadMotion(song.id)
         } catch (_: Exception) {}
     }
@@ -1326,7 +1326,7 @@ class PlayerViewModel @Inject constructor(
             startPlayback()
         }
         preloadedForSongId = null
-        if (full) loadLyrics(song.id)
+        if (full || song.id.startsWith("zl1.")) loadLyrics(song.id)
         loadMotion(song.id)
         if (song.artistId == null || song.albumId == null) enrichSongIds(song.id)
         // Prefetch N+1 immediately so it's cached well before crossfade. Under Repeat

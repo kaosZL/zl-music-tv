@@ -303,14 +303,26 @@ class InAppWebServer @Inject constructor(
      * 每个连接一个协程（IO），runBlocking 等引擎可接受；15s 超时防止脚本卡死挂住播放器。
      */
     private fun handleZlStream(out: BufferedOutputStream, songId: String) {
-        val url = kotlinx.coroutines.runBlocking {
-            kotlinx.coroutines.withTimeoutOrNull(15_000) { repo.playableUrl(songId) }
+        addLog("PLR", "GET /zlstream ${songId.take(24)}…")
+        val t0 = System.currentTimeMillis()
+        val result = kotlinx.coroutines.runBlocking {
+            kotlinx.coroutines.withTimeoutOrNull(15_000) {
+                runCatching { repo.playableUrl(songId) }
+            }
         }
-        if (url == null || !url.startsWith("http")) {
-            addLog("ERROR", "zlstream 解析失败: ${songId.take(24)}…")
-            send(out, 404, "text/plain", "resolve failed")
-        } else {
-            send(out, 302, "text/plain", "", "Location: $url\r\n")
+        when {
+            result == null -> {
+                addLog("ERROR", "zlstream 超时(15s): ${songId.take(24)}… —— 脚本未在时限内解析出链接")
+                send(out, 404, "text/plain", "resolve timeout")
+            }
+            result.isFailure -> {
+                addLog("ERROR", "zlstream 失败: ${result.exceptionOrNull()?.message ?: "?"}")
+                send(out, 404, "text/plain", "resolve failed")
+            }
+            else -> {
+                addLog("PLR", "zlstream 302 OK (${System.currentTimeMillis() - t0}ms)")
+                send(out, 302, "text/plain", "", "Location: ${result.getOrDefault("")}\r\n")
+            }
         }
     }
 

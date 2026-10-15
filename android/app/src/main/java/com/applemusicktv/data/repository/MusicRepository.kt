@@ -123,10 +123,24 @@ class MusicRepository @Inject constructor(
     // album's artist relationship, which AlbumDto doesn't carry. Standalone returns
     // nothing rather than guessing; the shelf just doesn't render.
     suspend fun getRelatedAlbums(id: String) =
+        if (id.startsWith("zlpl:") || id.startsWith("zlboard:")) Result.success(emptyList())
+        else
         if (!useProxy) direct.relatedAlbums(id).map { it.map(::albumFromDto) }
         else apiCall { api.getRelatedAlbums(id).albums.map(::albumFromDto) }
 
     suspend fun getSong(id: String) =
+        if (com.applemusicktv.data.lx.LxMapper.isLxId(id)) {
+            // ZL：自定义音源歌的详情就在复合 id 里，不打 Apple
+            runCatching {
+                val m = com.applemusicktv.data.lx.LxMapper.decodeSongId(id)!!
+                com.applemusicktv.data.lx.LxMapper.songFromLx(
+                    org.json.JSONObject()
+                        .put("songmid", m.optString("i")).put("name", m.optString("n"))
+                        .put("singer", m.optString("s")).put("albumName", m.optString("al"))
+                        .put("interval", m.optInt("d")).put("img", m.optString("p"))
+                )
+            }
+        } else
         if (!useProxy) direct.song(id).map(::songFromDto)
         else apiCall { songFromDto(api.getSong(id)) }
 
@@ -244,6 +258,8 @@ class MusicRepository @Inject constructor(
     }
 
     suspend fun getMotion(songId: String) =
+        if (songId.startsWith("zl1.") || songId.startsWith("zlpl:")) Result.success(null)
+        else
         if (!useProxy) direct.motion(songId) else runCatching { api.getMotion(songId).video }
 
     /** Probe a personalized ra.* station's raw payload (standalone only). */
@@ -252,6 +268,8 @@ class MusicRepository @Inject constructor(
 
     /** Animated cover for an editorial playlist; null in proxy mode / user playlists. */
     suspend fun getPlaylistMotion(playlistId: String): Result<String?> =
+        if (playlistId.startsWith("zlpl:")) Result.success(null)
+        else
         if (!useProxy) direct.playlistMotion(playlistId) else Result.success(null)
 
     /** Motion loop for any card (editorial playlist / album / song), or null. Used for
