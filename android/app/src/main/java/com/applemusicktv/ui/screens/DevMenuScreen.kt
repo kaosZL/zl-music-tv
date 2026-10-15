@@ -95,6 +95,11 @@ fun DevMenuScreen(
                     Text(com.applemusicktv.BuildConfig.VERSION_NAME, fontSize = 11.sp, color = Color(0xFF777777))
                 }
 
+                Spacer(Modifier.height(20.dp))
+            }
+        }
+    }
+
     if (showQr && state.webServerUrl.isNotEmpty()) {
         com.applemusicktv.ui.components.QrImportOverlay(
             url = state.webServerUrl,
