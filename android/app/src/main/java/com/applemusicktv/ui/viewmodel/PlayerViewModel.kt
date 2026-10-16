@@ -568,8 +568,7 @@ class PlayerViewModel @Inject constructor(
                     val at = player.currentPosition
                     webServer.addLog("PLR", "standalone stuttering on ${curSong.title} " +
                         "($stutterCount rebuffers) — switching to proxy at ${at}ms")
-                    player.setMediaItem(buildMediaItem(curSong, repo.streamUrl(curSong.id)), at)
-                    player.prepare(); player.play()
+                    setMediaSmart(curSong, repo.streamUrl(curSong.id), at) { player.prepare(); player.play() }
                 }
             }
             if (state == Player.STATE_READY && lastFormatLoggedFor != song) {
@@ -732,8 +731,7 @@ class PlayerViewModel @Inject constructor(
                 val s = _state.value
                 val cur = s.queue.getOrNull(s.queueIndex)
                 if (cur != null) {
-                    player.setMediaItem(buildMediaItem(cur, repo.streamUrl(cur.id)))
-                    player.prepare(); player.volume = 1f; player.playWhenReady = wasPlaying
+                    setMediaSmart(cur, repo.streamUrl(cur.id)) { player.prepare(); player.volume = 1f; player.playWhenReady = wasPlaying }
                     return
                 }
             }
@@ -773,10 +771,7 @@ class PlayerViewModel @Inject constructor(
         } else {
             toast("本机播放失败 — 改用服务器")
         }
-        player.setMediaItem(buildMediaItem(cur, repo.streamUrl(cur.id)))
-        player.prepare()
-        if (pos > 3_000) player.seekTo(pos)
-        player.volume = 1f; player.playWhenReady = wasPlaying
+        setMediaSmart(cur, repo.streamUrl(cur.id)) { player.prepare(); if (pos > 3_000) player.seekTo(pos); player.volume = 1f; player.playWhenReady = wasPlaying }
     }
 
     private fun buildMediaSession(exo: ExoPlayer): androidx.media3.session.MediaSession =
@@ -1041,8 +1036,7 @@ class PlayerViewModel @Inject constructor(
             val src = if (standalone) buildStandaloneSource(r.song) else null
             _state.update { it.copy(standaloneActive = src != null) }
             val uri = if (r.full) repo.streamUrl(r.song.id) else (r.song.previewUrl ?: repo.streamUrl(r.song.id))
-            if (src != null) player.setMediaSource(src, r.posMs) else player.setMediaItem(buildMediaItem(r.song, uri), r.posMs)
-            player.prepare(); player.play()
+            if (src != null) { player.setMediaSource(src, r.posMs); player.prepare(); player.play() } else setMediaSmart(r.song, uri, r.posMs) { player.prepare(); player.play() }
             val nextSong = _state.value.queue.getOrNull(_state.value.queueIndex + 1)
             if (r.full && !standalone && nextSong != null && preloadedForSongId != nextSong.id) {
                 preloadedForSongId = nextSong.id
@@ -1311,9 +1305,8 @@ class PlayerViewModel @Inject constructor(
                 // Superseded by a newer selection while we were decrypting — drop it so
                 // the skipped-over song never briefly plays.
                 if (myGen != playGen) return@launch
-                if (src != null) player.setMediaSource(src)
-                else player.setMediaItem(buildMediaItem(song, uri))
-                player.prepare()
+                if (src != null) { player.setMediaSource(src); player.prepare() }
+                else setMediaSmart(song, uri) { player.prepare() }
                 if (src != null) standaloneFailures = 0
                 _state.update { it.copy(standaloneActive = src != null) }
                 startPlayback()
@@ -1321,9 +1314,7 @@ class PlayerViewModel @Inject constructor(
         } else {
             usingStandalone = false
             _state.update { it.copy(standaloneActive = false) }
-            player.setMediaItem(buildMediaItem(song, uri))
-            player.prepare()
-            startPlayback()
+            setMediaSmart(song, uri) { player.prepare(); startPlayback() }
         }
         preloadedForSongId = null
         if (full || song.id.startsWith("zl1.")) loadLyrics(song.id)
@@ -1380,10 +1371,8 @@ class PlayerViewModel @Inject constructor(
         hasPlayedSomething = true
         _state.update { it.copy(currentSong = song, song = song, queue = listOf(song), queueIndex = 0, lyrics = emptyList(), isFullStream = useFullStream, motionUrl = null) }
         val uri = if (useFullStream) repo.streamUrl(song.id) else (song.previewUrl ?: repo.streamUrl(song.id))
-        player.setMediaItem(buildMediaItem(song, uri))
-        player.prepare()
-        player.play()
-        if (useFullStream) loadLyrics(song.id)
+        setMediaSmart(song, uri) { player.prepare(); player.play() }
+        if (useFullStream || song.id.startsWith("zl1.")) loadLyrics(song.id)
         loadMotion(song.id)
         if (song.artistId == null || song.albumId == null) enrichSongIds(song.id)
     }
@@ -2085,9 +2074,15 @@ class PlayerViewModel @Inject constructor(
                         val cfExo = buildCrossfadeExo().also { e ->
                             e.volume = 0f
                             if (!cfStandalone) {
-                                e.setMediaItem(buildMediaItem(nextSong, repo.streamUrl(nextSong.id)))
-                                e.prepare()
-                                e.play()
+                                if (nextSong.id.startsWith("zl1.")) {
+                                    val next = nextSong
+                                    viewModelScope.launch {
+                                        val du = runCatching { repo.playableUrl(next.id) }.getOrNull()
+                                        if (du != null && !crossfadeSkipSongId.equals(next.id)) {
+                                            e.setMediaItem(buildMediaItem(next, du)); e.prepare(); e.play()
+                                        }
+                                    }
+                                } else { e.setMediaItem(buildMediaItem(nextSong, repo.streamUrl(nextSong.id))); e.prepare(); e.play() }
                             }
                         }
                         if (cfStandalone) {
@@ -2217,6 +2212,35 @@ class PlayerViewModel @Inject constructor(
             }
 
             delay(if (playing && nowPlayingVisible) 200L else if (playing) 1_000L else 500L)
+        }
+    }
+
+
+    /**
+     * ZL 统一媒体设置：自定义音源（zl1.）歌曲不走本地服务器 /zlstream 中转——
+     * 那条链在音源脚本卡死时无法真正中断（runBlocking 掐不断原生调用），
+     * 播放器会永远停在缓冲。这里改为协程里直接解析出 CDN 直链再 setMediaItem；
+     * 解析失败按「曲目不可用」处理：toast + 跳下一首，绝不无限等。
+     */
+    private fun setMediaSmart(song: com.applemusicktv.data.model.Song, fallbackUri: String, posMs: Long = 0L, afterSet: () -> Unit = {}) {
+        if (!song.id.startsWith("zl1.")) {
+            player.setMediaItem(buildMediaItem(song, fallbackUri), posMs)
+            afterSet()
+            return
+        }
+        val myGen = playGen
+        viewModelScope.launch {
+            val direct = runCatching { repo.playableUrl(song.id) }.getOrNull()
+            if (myGen != playGen) return@launch   // 已切歌，丢弃过期解析
+            if (direct == null) {
+                webServer.addLog("ERROR", "zl 直连取链失败: ${song.title} — 跳下一首")
+                toast("《${song.title}》取链失败，跳下一首")
+                val st = _state.value
+                if (st.queueIndex + 1 < st.queue.size) playFromQueue(st.queueIndex + 1)
+                return@launch
+            }
+            player.setMediaItem(buildMediaItem(song, direct), posMs)
+            afterSet()
         }
     }
 
